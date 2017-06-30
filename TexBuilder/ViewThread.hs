@@ -17,9 +17,10 @@ mupdfView :: FilePath -> IO ()
 mupdfView pdffile = do
   ph <- spawnProcess "/usr/bin/mupdf" [pdffile]
   Just pid <- getPid ph
-  inotify <- initINotify
-  tid <- forkIO ( newEmptyMVar >>= watch inotify pid )
+  tid <- forkIO $ withINotify $ \inotify -> do
+    newEmptyMVar >>= watch inotify pid
   exCode <- waitForProcess ph
+  putStrLn "mupdf exited, terminating"
   killThread tid
   where
     watch inotify pid mvar = do
