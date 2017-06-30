@@ -27,7 +27,7 @@ texBuilder texfile mbf engine =
     mvar <- newEmptyMVar
     forkIO $ do
       onFileEx pdffile (mupdfView pdffile)
-      putMVar ()
+      putMVar mvar ()
     tid <- forkIO $ compileThread texfile pdffile engine
     takeMVar mvar
     putStrLn "mupdf exited, terminating"
