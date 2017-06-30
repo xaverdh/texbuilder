@@ -24,8 +24,15 @@ texBuilder texfile mbf engine =
   let pdffile = fromMaybe (texfile -<.> "pdf") mbf
    in do
     setupTexFile texfile
-    forkOS $ onFileEx pdffile (mupdfView pdffile)
-    compileThread texfile pdffile engine
+    mvar <- newEmptyMVar
+    forkIO $ do
+      onFileEx pdffile (mupdfView pdffile)
+      putMVar ()
+    tid <- forkIO $ compileThread texfile pdffile engine
+    takeMVar mvar
+    putStrLn "mupdf exited, terminating"
+    killThread tid
+
 
 setupTexFile :: FilePath -> IO ()
 setupTexFile texfile = do

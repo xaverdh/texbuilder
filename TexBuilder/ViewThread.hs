@@ -20,7 +20,6 @@ mupdfView pdffile = do
   tid <- forkIO $ withINotify $ \inotify -> do
     newEmptyMVar >>= watch inotify pid
   exCode <- waitForProcess ph
-  putStrLn "mupdf exited, terminating"
   killThread tid
   where
     watch inotify pid mvar = do
