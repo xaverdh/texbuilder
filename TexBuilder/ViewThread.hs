@@ -18,7 +18,9 @@ mupdfView pdffile = do
   ph <- spawnProcess "/usr/bin/mupdf" [pdffile]
   Just pid <- getPid ph
   inotify <- initINotify
-  newEmptyMVar >>= watch inotify pid
+  tid <- forkIO ( newEmptyMVar >>= watch inotify pid )
+  exCode <- waitForProcess ph
+  killThread tid
   where
     watch inotify pid mvar = do
       wdesc <- addWatch inotify
