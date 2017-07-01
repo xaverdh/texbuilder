@@ -36,6 +36,7 @@ texBuilder :: FilePath
 texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
   let pdffile = fromMaybe (texfile -<.> "pdf") mbf
    in do
+    issueWarning
     setupTexFile texfile
     mvar <- newEmptyMVar
     forkIO $ do
