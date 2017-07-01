@@ -24,16 +24,16 @@ type Engine =
 lualatex :: Engine
 lualatex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/latexmk" args ""
+    "/usr/bin/lualatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
   where
     args =
-        [ "-lualatex"
-        ,"-f"
-        ,"-output-directory=" <> outDir
-        ,"-jobname=" <> jobname ]
+        [ "--interaction=scrollmode"
+        ,"--output-directory=" <> outDir
+        ,"--jobname=" <> jobname
+        ,"--file-line-error" ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
@@ -52,6 +52,24 @@ pdflatex outDir texfile extraArgs = do
         ,"--file-line-error" ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
+
+
+lualatexLatexMk :: Engine
+lualatexLatexMk outDir texfile extraArgs = do
+  (exCode,out,err) <- readProcessWithExitCode
+    "/usr/bin/latexmk" args ""
+  pure $ case exCode of
+    ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
+    ExitFailure _ -> Left out
+  where
+    args =
+        [ "-lualatex"
+        ,"-f"
+        ,"-output-directory=" <> outDir
+        ,"-jobname=" <> jobname ]
+        ++ extraArgs ++ [ texfile ]
+    jobname = "texbuilder-job"
+
 
 compile :: Engine
   -> FilePath
