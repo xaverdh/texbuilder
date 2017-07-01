@@ -78,7 +78,7 @@ recompileSt run = get >>= \case
 luaLaTex :: Engine
 luaLaTex outDir texfile extraArgs = do
   putStrLn "Note that lualatex does not currently respect \
-          \SOURCE_DATE_EPOCH, so the source will be \
+          \SOURCE_DATE_EPOCH, so the source will often be \
           \rebuild the maximum number of times, slowing \
           \things down."
   (exCode,out,err) <- readProcessWithExitCode

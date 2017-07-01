@@ -68,19 +68,18 @@ onFileEx file action = do
     True -> action
     False -> do
       inotify <- initINotify
-      mvar <- newMVar False
+      mvar <- newEmptyMVar
       wdesc <- addWatch inotify
-        [Create]
-        (takeDirectory file)
+        [Create] dir
         (onCreate mvar)
       takeMVar mvar
       removeWatch wdesc
       action
   where
+    dir = takeDirectory file
     onCreate mvar _ = do
       ex <- doesFileExist file
-      when ex $ do
-        putMVar mvar True
+      when ex $ putMVar mvar ()
 
 
 
