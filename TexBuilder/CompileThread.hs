@@ -4,10 +4,11 @@ where
 
 import TexBuilder.Engine
 
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
+
 import Control.Monad
 import System.INotify
 import Control.Concurrent.MVar
-
 
 
 compileThread :: FilePath
@@ -31,7 +32,7 @@ compileThread texfile pdffile engine extraArgs =
 
     logLoop mvar = do
       out <- takeMVar mvar
-      putStrLn out
+      PP.putDoc out
       logLoop mvar
 
 

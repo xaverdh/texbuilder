@@ -14,6 +14,7 @@ import Numeric.Natural
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B
 import "cryptonite" Crypto.Hash
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
 import Control.Monad.State
 import Control.Concurrent
@@ -123,7 +124,6 @@ luaLaTexMk outDir texfile extraArgs = do
   where
     args =
         [ "-lualatex"
-        , "-f"
         , "-output-directory=" <> outDir
         , "-jobname=" <> jobname ]
         ++ extraArgs ++ [ texfile ]
@@ -139,7 +139,6 @@ pdfLaTexMk outDir texfile extraArgs = do
   where
     args =
         [ "-pdf"
-        , "-f"
         , "-output-directory=" <> outDir
         , "-jobname=" <> jobname ]
         ++ extraArgs ++ [ texfile ]
@@ -148,7 +147,7 @@ pdfLaTexMk outDir texfile extraArgs = do
 compile :: Engine
   -> FilePath
   -> FilePath
-  -> MVar String
+  -> MVar PP.Doc
   -> [String]
   -> IO ThreadId
 compile engine texfile pdffile mvar extraArgs =
@@ -156,10 +155,12 @@ compile engine texfile pdffile mvar extraArgs =
     $ \dir -> do
       copyFile texfile (dir </> texfile)
       engine dir texfile extraArgs >>= \case
-        Left err -> putMVar mvar err
+        Left err -> putMVar mvar $ PP.red $ PP.text err
         Right outFile -> do
           copyFile outFile pdffile
-          putMVar mvar $ "Successful build from " <> dir
+          putMVar mvar $ PP.green $
+            PP.text "Successful build from"
+            PP.<+> PP.text dir <> PP.hardline
 
 
 
