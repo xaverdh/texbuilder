@@ -36,9 +36,9 @@ data RecompileState =
 recompile :: Natural -> Engine -> Engine
 recompile maxNum engine outDir texfile extraArgs = do
   time <- show <$> epochTime
-  evalStateT (recompileSt run) (StInitial maxNum)
+  evalStateT (recompileSt (run time)) (StInitial maxNum)
   where
-    run = do
+    run time = do
       setEnv "SOURCE_DATE_EPOCH" time
       -- ^ For reproductible output
       engine outDir texfile extraArgs
