@@ -1,4 +1,4 @@
-{-# language LambdaCase #-}
+{-# language LambdaCase, PackageImports #-}
 module TexBuilder.Engine
   ( Engine(..)
   , compile
@@ -12,11 +12,13 @@ where
 import Data.Monoid
 import Numeric.Natural
 import qualified Data.ByteString.Lazy as LB
-import Crypto.Hash
+import qualified Data.ByteString as B
+import "cryptonite" Crypto.Hash
 
 import Control.Monad.State
 import Control.Concurrent
 import Control.Concurrent.MVar
+import Control.DeepSeq
 
 import System.Directory
 import System.FilePath
@@ -60,10 +62,15 @@ recompileSt run = get >>= \case
       Left err -> failed err
       Right path -> do
         hash <- lift (hashlazy <$> LB.readFile path)
-        k path hash
+        hash `deepseq` k path hash
+        -- ^ deepseq is neccessary to force reading to
+        --   actually happen here. Otherwise both hash and 
+        --   oldHash will be created from the new file...
+    
     succ i path hash = do
       put $ StSucc (i-1) path hash
       recompileSt run
+    
     done = pure . Right
     failed = pure . Left
 
