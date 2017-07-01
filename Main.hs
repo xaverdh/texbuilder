@@ -1,6 +1,5 @@
 module Main where
 
-import TexBuilder.Engine
 import TexBuilder.TexBuilder
 
 import Data.Monoid
@@ -21,24 +20,37 @@ main = execParser parser >>= id
       <$> texOpt
       <*> optional pdfOpt
       <*> noluaFlag
+      <*> nolatexmkFlag
+      <*> numCompOpt
       <*> extraArgs
 
 pdfOpt = option str
   ( short 'p' <> long "pdf" <> metavar "PDFFILE"
   <> help "The name of the pdf file to write to \
-  \ (defaults to TEXFILE with file ending adjusted)" )
+  \ (defaults to TEXFILE with file ending adjusted)." )
 
 texOpt = option str
   ( short 't' <> long "tex" <> metavar "TEXFILE"
-  <> help "The tex file to watch" )
+  <> help "The tex file to watch." )
 
-noluaFlag = flag lualatex pdflatex
+noluaFlag = flag LuaLaTex PdfLaTex
   ( long "noluatex"
-  <> help "Do not user lualatex / use old pdflatex instead" )
+  <> help "Do not user luaLaTex / use old pdfLaTex instead." )
+
+nolatexmkFlag = flag LatexMk NoLatexMk
+  ( long "nolatexmk"
+  <> help "Do not go through latexmk, use engine directly." )
+
+numCompOpt = option auto
+  ( short 'r' <> long "recompile" <> metavar "NRECOMP" <> value 5
+  <> help "The maximum number of times we should attempt to \
+          \recompile the document unil it becomes stable \
+          \when using luaLaTex / pdfLaTex directly."
+  <> showDefault )
 
 extraArgs = many $ strArgument
   ( metavar "EXTRA_ARGS"
-  <> help "Extra arguments to pass to the latex engine")
+  <> help "Extra arguments to pass to the latex engine." )
 
 hdr = "texbuilder: view your latex output pdf while editing"
 

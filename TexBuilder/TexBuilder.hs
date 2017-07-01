@@ -1,5 +1,7 @@
 module TexBuilder.TexBuilder
-  ( texBuilder )
+  ( texBuilder
+  , UseEngine(..)
+  , UseLatexMk(..) )
 where
 
 import TexBuilder.Engine
@@ -9,6 +11,7 @@ import TexBuilder.ViewThread
 import Control.Monad
 import Data.Monoid
 import Data.Maybe
+import Numeric.Natural
 
 import Options.Applicative
 import Options.Applicative.Builder
@@ -19,12 +22,17 @@ import System.Exit
 import Control.Concurrent
 import Control.Concurrent.MVar
 
+data UseEngine = LuaLaTex | PdfLaTex
+data UseLatexMk = LatexMk | NoLatexMk
+
 texBuilder :: FilePath
   -> Maybe FilePath
-  -> Engine
+  -> UseEngine
+  -> UseLatexMk
+  -> Natural
   -> [String]
   -> IO ()
-texBuilder texfile mbf engine extraArgs =
+texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
   let pdffile = fromMaybe (texfile -<.> "pdf") mbf
    in do
     setupTexFile texfile
@@ -36,7 +44,14 @@ texBuilder texfile mbf engine extraArgs =
     takeMVar mvar
     putStrLn "mupdf exited, terminating"
     killThread tid
+  where
+    engine = case (useEngine,useLatexmk) of
+      (LuaLaTex,LatexMk) -> luaLaTexMk
+      (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
+      (PdfLaTex,LatexMk) -> pdfLaTexMk
+      (PdfLaTex,NoLatexMk) -> recompile nrecomp pdfLaTex
 
+      
 
 setupTexFile :: FilePath -> IO ()
 setupTexFile texfile = do
