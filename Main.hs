@@ -36,7 +36,7 @@ noluaFlag = flag lualatex pdflatex
   ( long "noluatex"
   <> help "Do not user lualatex / use old pdflatex instead" )
 
-extraArgs = some $ strArgument
+extraArgs = many $ strArgument
   ( metavar "EXTRA_ARGS"
   <> help "Extra arguments to pass to the latex engine")
 
