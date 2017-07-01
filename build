@@ -1,0 +1,7 @@
+#!/bin/sh
+
+git clone https://gitlab.com/xaverdh/tex-builder
+cd tex-builder
+cabal sandbox init
+cabal install --bindir . --ghc-option=-threaded
+

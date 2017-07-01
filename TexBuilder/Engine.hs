@@ -18,44 +18,51 @@ import System.Exit
 import System.IO.Temp
 
 
-type Engine = FilePath -> FilePath -> IO (Either String FilePath)
+type Engine =
+  FilePath -> FilePath -> [String] -> IO (Either String FilePath)
 
 lualatex :: Engine
-lualatex outDir texfile = do
-  (exCode,out,err) <- 
-    readProcessWithExitCode "/usr/bin/latexmk"
-      [ "-lualatex"
-       ,"-f"
-       ,"-output-directory=" <> outDir
-       ,"-jobname=htex-job"
-       ,texfile ] ""
+lualatex outDir texfile extraArgs = do
+  (exCode,out,err) <- readProcessWithExitCode
+    "/usr/bin/latexmk" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> "htex-job.pdf"
     ExitFailure _ -> Left out
+  where
+    args =
+        [ "-lualatex"
+        ,"-f"
+        ,"-output-directory=" <> outDir
+        ,"-jobname=htex-job" ]
+        ++ extraArgs ++ [ texfile ]
 
 pdflatex :: Engine
-pdflatex outDir texfile = do
-  (exCode,out,err) <-
-    readProcessWithExitCode "/usr/bin/pdflatex"
-      [ "--interaction=scrollmode"
-       ,"--output-directory=" <> outDir
-       ,"--jobname=htex-job"
-       ,"--file-line-error"
-       ,texfile ] ""
+pdflatex outDir texfile extraArgs = do
+  (exCode,out,err) <- readProcessWithExitCode
+    "/usr/bin/pdflatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> "htex-job.pdf"
     ExitFailure _ -> Left out
+  where
+    args = 
+        [ "--interaction=scrollmode"
+        ,"--output-directory=" <> outDir
+        ,"--jobname=htex-job"
+        ,"--file-line-error" ]
+        ++ extraArgs ++ [ texfile ]
+
 
 compile :: Engine
   -> FilePath
   -> FilePath
   -> MVar String
+  -> [String]
   -> IO ThreadId
-compile engine texfile pdffile mvar = forkIO
-  $ withSystemTempDirectory "htex"
+compile engine texfile pdffile mvar extraArgs =
+  forkIO $ withSystemTempDirectory "htex"
     $ \dir -> do
       copyFile texfile (dir </> texfile)
-      engine dir texfile >>= \case
+      engine dir texfile extraArgs >>= \case
         Left err -> putMVar mvar err
         Right outFile -> do
           copyFile outFile pdffile

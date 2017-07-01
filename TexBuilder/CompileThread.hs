@@ -10,8 +10,12 @@ import Control.Concurrent.MVar
 
 
 
-compileThread :: FilePath -> FilePath -> Engine -> IO ()
-compileThread texfile pdffile engine =
+compileThread :: FilePath
+  -> FilePath
+  -> Engine
+  -> [String]
+  -> IO ()
+compileThread texfile pdffile engine extraArgs =
   withINotify $ \inotify -> do
     mvar <- newEmptyMVar
     watch inotify $ go inotify mvar
@@ -20,7 +24,7 @@ compileThread texfile pdffile engine =
     watch i = addWatch i [Modify] texfile
 
     go inotify mvar event = do
-      compile engine texfile pdffile mvar
+      compile engine texfile pdffile mvar extraArgs
       case event of
         Ignored -> void $ watch inotify $ go inotify mvar
         _ -> pure ()

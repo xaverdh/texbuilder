@@ -19,8 +19,12 @@ import System.Exit
 import Control.Concurrent
 import Control.Concurrent.MVar
 
-texBuilder :: FilePath -> Maybe FilePath -> Engine -> IO ()
-texBuilder texfile mbf engine =
+texBuilder :: FilePath
+  -> Maybe FilePath
+  -> Engine
+  -> [String]
+  -> IO ()
+texBuilder texfile mbf engine extraArgs =
   let pdffile = fromMaybe (texfile -<.> "pdf") mbf
    in do
     setupTexFile texfile
@@ -28,7 +32,7 @@ texBuilder texfile mbf engine =
     forkIO $ do
       onFileEx pdffile (mupdfView pdffile)
       putMVar mvar ()
-    tid <- forkIO $ compileThread texfile pdffile engine
+    tid <- forkIO $ compileThread texfile pdffile engine extraArgs
     takeMVar mvar
     putStrLn "mupdf exited, terminating"
     killThread tid
