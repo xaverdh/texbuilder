@@ -12,7 +12,7 @@ where
 import Data.Monoid
 import Numeric.Natural
 import qualified Data.ByteString.Lazy as LB
-import Data.Digest.XXHash
+import Crypto.Hash
 
 import Control.Monad.State
 import Control.Concurrent
@@ -31,7 +31,7 @@ type Engine =
 
 data RecompileState =
   StInitial Natural
-  | StSucc Natural FilePath XXHash
+  | StSucc Natural FilePath (Digest MD5)
 
 recompile :: Natural -> Engine -> Engine
 recompile maxNum engine outDir texfile extraArgs = do
@@ -59,7 +59,7 @@ recompileSt run = get >>= \case
     go k = lift run >>= \case
       Left err -> failed err
       Right path -> do
-        hash <- lift (xxHash <$> LB.readFile path)
+        hash <- lift (hashlazy <$> LB.readFile path)
         k path hash
     succ i path hash = do
       put $ StSucc (i-1) path hash
