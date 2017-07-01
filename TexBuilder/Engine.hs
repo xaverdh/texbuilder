@@ -23,7 +23,8 @@ import System.FilePath
 import System.Process
 import System.Exit
 import System.IO.Temp
-
+import System.Environment (setEnv)
+import System.Posix.Time (epochTime)
 
 type Engine =
   FilePath -> FilePath -> [String] -> IO (Either String FilePath)
@@ -33,9 +34,15 @@ data RecompileState =
   | StSucc Natural FilePath XXHash
 
 recompile :: Natural -> Engine -> Engine
-recompile maxNum engine outDir texfile extraArgs =
-  let run = engine outDir texfile extraArgs
-   in evalStateT (recompileSt run) (StInitial maxNum)
+recompile maxNum engine outDir texfile extraArgs = do
+  time <- show <$> epochTime
+  evalStateT (recompileSt run) (StInitial maxNum)
+  where
+    run = do
+      setEnv "SOURCE_DATE_EPOCH" time
+      -- ^ For reproductible output
+      engine outDir texfile extraArgs
+
 
 recompileSt :: IO (Either String FilePath)
   -> StateT RecompileState IO (Either String FilePath)
@@ -61,11 +68,10 @@ recompileSt run = get >>= \case
     failed = pure . Left
 
 
-
 luaLaTex :: Engine
 luaLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/luaLaTex" args ""
+    "/usr/bin/lualatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -82,7 +88,7 @@ luaLaTex outDir texfile extraArgs = do
 pdfLaTex :: Engine
 pdfLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/pdfLaTex" args ""
+    "/usr/bin/pdflatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -96,7 +102,6 @@ pdfLaTex outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
-
 luaLaTexMk :: Engine
 luaLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
@@ -106,7 +111,7 @@ luaLaTexMk outDir texfile extraArgs = do
     ExitFailure _ -> Left out
   where
     args =
-        [ "-luaLaTex"
+        [ "-lualatex"
         , "-f"
         , "-output-directory=" <> outDir
         , "-jobname=" <> jobname ]
@@ -144,6 +149,9 @@ compile engine texfile pdffile mvar extraArgs =
         Right outFile -> do
           copyFile outFile pdffile
           putMVar mvar $ "Successful build from " <> dir
+
+
+
 
 
 
