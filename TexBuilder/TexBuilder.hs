@@ -61,7 +61,7 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
         "Note that lualatex does not currently respect \
         \SOURCE_DATE_EPOCH, so the source will often be \
         \rebuild the maximum number of times, slowing \
-        \things down."
+        \things down." <> PP.hardline
 
 
 setupTexFile :: FilePath -> IO ()
