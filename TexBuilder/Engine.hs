@@ -31,9 +31,10 @@ lualatex outDir texfile extraArgs = do
   where
     args =
         [ "--interaction=scrollmode"
-        ,"--output-directory=" <> outDir
-        ,"--jobname=" <> jobname
-        ,"--file-line-error" ]
+        , "--output-directory=" <> outDir
+        , "--jobname=" <> jobname
+        , "--output-format=pdf"
+        , "--file-line-error" ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
@@ -47,9 +48,10 @@ pdflatex outDir texfile extraArgs = do
   where
     args = 
         [ "--interaction=scrollmode"
-        ,"--output-directory=" <> outDir
-        ,"--jobname=" <> jobname
-        ,"--file-line-error" ]
+        , "--output-directory=" <> outDir
+        , "--jobname=" <> jobname
+        , "--output-format=pdf"
+        , "--file-line-error" ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
@@ -64,9 +66,9 @@ lualatexLatexMk outDir texfile extraArgs = do
   where
     args =
         [ "-lualatex"
-        ,"-f"
-        ,"-output-directory=" <> outDir
-        ,"-jobname=" <> jobname ]
+        , "-f"
+        , "-output-directory=" <> outDir
+        , "-jobname=" <> jobname ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
