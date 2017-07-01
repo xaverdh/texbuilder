@@ -8,6 +8,7 @@ import TexBuilder.Engine
 import TexBuilder.CompileThread
 import TexBuilder.ViewThread
 
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Control.Monad
 import Data.Monoid
 import Data.Maybe
@@ -50,8 +51,17 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
       (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
       (PdfLaTex,LatexMk) -> pdfLaTexMk
       (PdfLaTex,NoLatexMk) -> recompile nrecomp pdfLaTex
+    
+    issueWarning = case (useEngine,useLatexmk) of
+      (LuaLaTex,NoLatexMk) -> PP.putDoc warning
+      _ -> pure ()
+    
+    warning = PP.yellow $ PP.text
+        "Note that lualatex does not currently respect \
+        \SOURCE_DATE_EPOCH, so the source will often be \
+        \rebuild the maximum number of times, slowing \
+        \things down."
 
-      
 
 setupTexFile :: FilePath -> IO ()
 setupTexFile texfile = do
