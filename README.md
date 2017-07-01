@@ -8,6 +8,7 @@ pdf file and send a signal to mupdf to reload the file.
 This effectively allows for a "continous preview"-like experience.
 
 ## Prerequisites and Dependencies
+  * linux (we use inotify extensively)
   * A recent cabal / ghc
   * (currently only works with) mupdf
   * working latex with either lualatex or pdflatex
