@@ -47,12 +47,7 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
   where
     engine = case (useEngine,useLatexmk) of
       (LuaLaTex,LatexMk) -> luaLaTexMk
-      (LuaLaTex,NoLatexMk) -> do
-        putStrLn "Note that lualatex does not currently respect \
-                  \SOURCE_DATE_EPOCH, so the source will be \
-                  \rebuild the maximum number of times, slowing \
-                  \things down."
-        recompile nrecomp luaLaTex
+      (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
       (PdfLaTex,LatexMk) -> pdfLaTexMk
       (PdfLaTex,NoLatexMk) -> recompile nrecomp pdfLaTex
 

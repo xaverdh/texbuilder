@@ -11,7 +11,7 @@ where
 
 import Data.Monoid
 import Numeric.Natural
-import Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Lazy as LB
 import Data.Digest.XXHash
 
 import Control.Monad.State
@@ -70,6 +70,10 @@ recompileSt run = get >>= \case
 
 luaLaTex :: Engine
 luaLaTex outDir texfile extraArgs = do
+  putStrLn "Note that lualatex does not currently respect \
+          \SOURCE_DATE_EPOCH, so the source will be \
+          \rebuild the maximum number of times, slowing \
+          \things down."
   (exCode,out,err) <- readProcessWithExitCode
     "/usr/bin/lualatex" args ""
   pure $ case exCode of
