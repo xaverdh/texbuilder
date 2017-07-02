@@ -31,8 +31,7 @@ compileThread texfile pdffile engine extraArgs =
         _ -> pure ()
 
     logLoop mvar = do
-      out <- takeMVar mvar
-      PP.putDoc out
+      takeMVar mvar >>= PP.putDoc
       logLoop mvar
 
 

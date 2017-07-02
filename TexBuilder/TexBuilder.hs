@@ -10,6 +10,7 @@ import TexBuilder.ViewThread
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Control.Monad
+import Control.Monad.Extra
 import Data.Monoid
 import Data.Maybe
 import Numeric.Natural
@@ -38,6 +39,7 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
    in do
     issueWarning
     setupTexFile texfile
+    initialCompile engine texfile pdffile extraArgs
     mvar <- newEmptyMVar
     forkIO $ do
       onFileEx pdffile (mupdfView pdffile)
@@ -62,6 +64,19 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
         \SOURCE_DATE_EPOCH, so the source will often be \
         \rebuild the maximum number of times, slowing \
         \things down." <> PP.hardline
+
+
+initialCompile :: Engine
+  -> FilePath
+  -> FilePath
+  -> [String]
+  -> IO () 
+initialCompile engine texfile pdffile extraArgs =
+  unlessM (doesFileExist pdffile) $ do
+    putStrLn "No ouput file detected, compiling."
+    mvar <- newEmptyMVar
+    compile engine texfile pdffile mvar extraArgs
+    takeMVar mvar >>= PP.putDoc
 
 
 setupTexFile :: FilePath -> IO ()
