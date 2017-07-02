@@ -17,8 +17,6 @@ import "cryptonite" Crypto.Hash
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
 import Control.Monad.State
-import Control.Concurrent
-import Control.Concurrent.MVar
 import Control.DeepSeq
 
 import System.Directory
@@ -36,6 +34,11 @@ data RecompileState =
   StInitial Natural
   | StSucc Natural FilePath (Digest MD5)
 
+
+-- | Recompile the code until the output stabilizes
+--   or maxNum compile runs is reached.
+--   Care must be taken to make the latex output reproductible.
+--   Otherwise the output will never stablilize.
 recompile :: Natural -> Engine -> Engine
 recompile maxNum engine outDir texfile extraArgs = do
   time <- show <$> epochTime
@@ -140,23 +143,24 @@ pdfLaTexMk outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
+-- | Compile the tex code in a fresh directory and, if successful,
+--   write the output to given path. Returns human readable
+--   information about the build success / failure.
 compile :: Engine
   -> FilePath
   -> FilePath
-  -> MVar PP.Doc
   -> [String]
-  -> IO ThreadId
-compile engine texfile pdffile mvar extraArgs =
-  forkIO $ withSystemTempDirectory "texbuilder"
-    $ \dir -> do
-      copyFile texfile (dir </> texfile)
-      engine dir texfile extraArgs >>= \case
-        Left err -> putMVar mvar $ PP.red $ PP.text err
-        Right outFile -> do
-          copyFile outFile pdffile
-          putMVar mvar $ PP.green $
-            PP.text "Successful build from"
-            PP.<+> PP.text dir <> PP.hardline
+  -> IO PP.Doc
+compile engine texfile pdffile extraArgs =
+  withSystemTempDirectory "texbuilder" $ \dir -> do
+    copyFile texfile (dir </> texfile)
+    engine dir texfile extraArgs >>= \case
+      Left err -> pure $ PP.red $ PP.text err
+      Right outFile -> do
+        copyFile outFile pdffile
+        pure $ PP.green $
+          PP.text "Successful build from"
+          PP.<+> PP.text dir <> PP.hardline
 
 
 

@@ -4,6 +4,7 @@ module TexBuilder.TexBuilder
   , UseLatexMk(..) )
 where
 
+import TexBuilder.Utils
 import TexBuilder.Engine
 import TexBuilder.CompileThread
 import TexBuilder.ViewThread
@@ -19,7 +20,6 @@ import Options.Applicative
 import Options.Applicative.Builder
 import System.Directory
 import System.FilePath
-import System.INotify
 import System.Exit
 import Control.Concurrent
 import Control.Concurrent.MVar
@@ -34,21 +34,26 @@ texBuilder :: FilePath
   -> Natural
   -> [String]
   -> IO ()
-texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
-  let pdffile = fromMaybe (texfile -<.> "pdf") mbf
-   in do
-    issueWarning
-    assertFileEx texfile
-    initialCompile engine texfile pdffile extraArgs
-    mvar <- newEmptyMVar
-    forkIO $ do
-      onFileEx pdffile (mupdfView pdffile)
-      putMVar mvar ()
-    tid <- forkIO $ compileThread texfile pdffile engine extraArgs
-    takeMVar mvar
-    putStrLn "mupdf exited, terminating"
-    killThread tid
+texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
+  issueWarning
+  -- ^ Issue warning if appropriate
+  assertFileEx texfile
+  -- ^ Assert that the tex file exists
+  initialCompile pdffile run
+  -- ^ Do an initial compile run if appropriate
+  sem <- newBinSem
+  -- ^ Signaling semaphore connecting the threads
+  tid <- forkIO $ compileThread texfile run sem
+  -- ^ The thread which compiles the tex code
+  onFileEx pdffile (mupdfView pdffile sem)
+  -- ^ Enter the main thread which updates the pdf view
+  putStrLn "mupdf exited, terminating"
+  killThread tid
   where
+    run = compile engine texfile pdffile extraArgs
+
+    pdffile = fromMaybe (texfile -<.> "pdf") mbf
+
     engine = case (useEngine,useLatexmk) of
       (LuaLaTex,LatexMk) -> luaLaTexMk
       (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
@@ -66,17 +71,11 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
         \things down." <> PP.hardline
 
 
-initialCompile :: Engine
-  -> FilePath
-  -> FilePath
-  -> [String]
-  -> IO () 
-initialCompile engine texfile pdffile extraArgs =
+initialCompile :: FilePath -> IO PP.Doc -> IO () 
+initialCompile pdffile run =
   unlessM (doesFileExist pdffile) $ do
     putStrLn "No ouput file detected, compiling."
-    mvar <- newEmptyMVar
-    compile engine texfile pdffile mvar extraArgs
-    takeMVar mvar >>= PP.putDoc
+    run >>= PP.putDoc
 
 
 assertFileEx :: FilePath -> IO ()
@@ -84,29 +83,5 @@ assertFileEx file =
   unlessM (doesFileExist file) $ do
     putStrLn (file <> " does not exist.")
     exitFailure
-
-
-onFileEx :: FilePath -> IO a -> IO a
-onFileEx file action =
-  unlessM
-    (doesFileExist file)
-    (waitForFile file)
-  >> action
-
-waitForFile :: FilePath -> IO ()
-waitForFile file =
-  withINotify $ \inotify -> do
-    mvar <- newEmptyMVar
-    wdesc <- addWatch inotify
-      [Create] dir
-      (onCreate mvar)
-    takeMVar mvar
-    removeWatch wdesc
-  where
-    dir = takeDirectory file
-    onCreate mvar _ =
-      whenM (doesFileExist file)
-      $ void $ tryPutMVar mvar ()
-
 
 

@@ -2,43 +2,35 @@ module TexBuilder.ViewThread
   ( mupdfView )
 where
 
+import Data.Functor
 import Control.Monad
 import Control.Concurrent
-import Control.Concurrent.MVar
 import System.Posix.Types
 import System.Posix.Signals
 import System.Process
 import System.Process.Internals
-import System.INotify
+
+import TexBuilder.Utils
 
 
-mupdfView :: FilePath -> IO ()
-mupdfView pdffile = do
+mupdfView :: FilePath -- ^ The path of the file to view
+  -> BinSem
+  -- ^ Signaling semaphore to communicate when the
+  --   pdf view should be updated.
+  -> IO ()
+mupdfView pdffile sem = do
   ph <- spawnProcess "/usr/bin/mupdf" [pdffile]
   Just pid <- getPid ph
-  tid <- forkIO $
-    onFileTouched pdffile (signalProcess sigHUP pid)
+  tid <- forkIO $ signalThread pid sem
   exCode <- waitForProcess ph
   killThread tid
 
-
-onFileTouched :: FilePath -> IO a -> IO ()
-onFileTouched file action = do
-  mvar <- newEmptyMVar
-  withINotify $ onFileTouched' file action mvar
-
-onFileTouched' :: FilePath -> IO a -> MVar () -> INotify -> IO ()
-onFileTouched' file action mvar inotify = loop
-  where
-    watch = void . addWatch inotify [Attrib] file
-    go _ = void $ tryPutMVar mvar ()
-    
-    loop = do
-      watch go
-      takeMVar mvar
-      action
-      loop
-    
+signalThread :: ProcessID -> BinSem -> IO ()
+signalThread pid sem = do
+  wait sem
+  signalProcess sigHUP pid
+  signalThread pid sem 
+  
 getPid :: ProcessHandle -> IO (Maybe CPid)
 getPid = flip withProcessHandle $ \ph_ ->
   case ph_ of
