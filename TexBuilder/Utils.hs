@@ -98,10 +98,4 @@ onFileEx file action =
   >> action
 
 
-loopOnFileTouched :: FilePath -> IO Bool -> IO ()
-loopOnFileTouched = loopOnEvent [Attrib]
-
-loopOnFileWritten :: FilePath -> IO Bool -> IO ()
-loopOnFileWritten = loopOnEvent [Modify,DeleteSelf,MoveSelf]
-
 
