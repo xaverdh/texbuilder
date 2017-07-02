@@ -17,20 +17,25 @@ mupdfView :: FilePath -> IO ()
 mupdfView pdffile = do
   ph <- spawnProcess "/usr/bin/mupdf" [pdffile]
   Just pid <- getPid ph
-  tid <- forkIO $ withINotify $ \inotify -> do
-    newEmptyMVar >>= watch inotify pid
+  tid <- forkIO $
+    onFileTouched pdffile (signalProcess sigHUP pid)
   exCode <- waitForProcess ph
   killThread tid
-  where
-    watch inotify pid mvar = do
-      wdesc <- addWatch inotify
-        [Attrib]
-        pdffile
-        (const $ void $ tryPutMVar mvar ())
-      takeMVar mvar
-      signalProcess sigHUP pid
-      newEmptyMVar >>= watch inotify pid
 
+
+onFileTouched :: FilePath -> IO a -> IO ()
+onFileTouched file action =
+  withINotify $ \inotify -> do
+    mvar <- newEmptyMVar
+    wdesc <- addWatch inotify
+      [Attrib] file
+      (const $ void $ putMVar mvar ())
+    loop mvar
+  where
+    loop mvar = do
+      takeMVar mvar
+      action
+      loop mvar
 
 getPid :: ProcessHandle -> IO (Maybe CPid)
 getPid = flip withProcessHandle $ \ph_ ->

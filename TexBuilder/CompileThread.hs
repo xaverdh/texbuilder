@@ -22,12 +22,12 @@ compileThread texfile pdffile engine extraArgs =
     watch inotify $ go inotify mvar
     logLoop mvar
   where
-    watch i = addWatch i [Modify] texfile
+    watch i = void . addWatch i [Modify] texfile
 
     go inotify mvar event = do
       compile engine texfile pdffile mvar extraArgs
       case event of
-        Ignored -> void $ watch inotify $ go inotify mvar
+        Ignored -> watch inotify $ go inotify mvar
         _ -> pure ()
 
     logLoop mvar = do

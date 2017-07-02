@@ -38,7 +38,7 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs =
   let pdffile = fromMaybe (texfile -<.> "pdf") mbf
    in do
     issueWarning
-    setupTexFile texfile
+    assertFileEx texfile
     initialCompile engine texfile pdffile extraArgs
     mvar <- newEmptyMVar
     forkIO $ do
@@ -79,33 +79,34 @@ initialCompile engine texfile pdffile extraArgs =
     takeMVar mvar >>= PP.putDoc
 
 
-setupTexFile :: FilePath -> IO ()
-setupTexFile texfile = do
-  ex <- doesFileExist texfile
-  unless ex $ do
-    putStrLn (texfile <> " does not exist.")
+assertFileEx :: FilePath -> IO ()
+assertFileEx file =
+  unlessM (doesFileExist file) $ do
+    putStrLn (file <> " does not exist.")
     exitFailure
 
 
 onFileEx :: FilePath -> IO a -> IO a
-onFileEx file action = do
-  ex <- doesFileExist file
-  case ex of
-    True -> action
-    False -> do
-      inotify <- initINotify
-      mvar <- newEmptyMVar
-      wdesc <- addWatch inotify
-        [Create] dir
-        (onCreate mvar)
-      takeMVar mvar
-      removeWatch wdesc
-      action
+onFileEx file action =
+  unlessM
+    (doesFileExist file)
+    (waitForFile file)
+  >> action
+
+waitForFile :: FilePath -> IO ()
+waitForFile file =
+  withINotify $ \inotify -> do
+    mvar <- newEmptyMVar
+    wdesc <- addWatch inotify
+      [Create] dir
+      (onCreate mvar)
+    takeMVar mvar
+    removeWatch wdesc
   where
     dir = takeDirectory file
-    onCreate mvar _ = do
-      ex <- doesFileExist file
-      when ex $ putMVar mvar ()
+    onCreate mvar _ =
+      whenM (doesFileExist file)
+      $ void $ tryPutMVar mvar ()
 
 
 
