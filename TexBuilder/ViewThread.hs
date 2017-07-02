@@ -12,7 +12,6 @@ import System.Process.Internals
 import System.INotify
 
 
-
 mupdfView :: FilePath -> IO ()
 mupdfView pdffile = do
   ph <- spawnProcess "/usr/bin/mupdf" [pdffile]
@@ -24,19 +23,22 @@ mupdfView pdffile = do
 
 
 onFileTouched :: FilePath -> IO a -> IO ()
-onFileTouched file action =
-  withINotify $ \inotify -> do
-    mvar <- newEmptyMVar
-    wdesc <- addWatch inotify
-      [Attrib] file
-      (const $ void $ putMVar mvar ())
-    loop mvar
+onFileTouched file action = do
+  mvar <- newEmptyMVar
+  withINotify $ onFileTouched' file action mvar
+
+onFileTouched' :: FilePath -> IO a -> MVar () -> INotify -> IO ()
+onFileTouched' file action mvar inotify = loop
   where
-    loop mvar = do
+    watch = void . addWatch inotify [Attrib] file
+    go _ = void $ tryPutMVar mvar ()
+    
+    loop = do
+      watch go
       takeMVar mvar
       action
-      loop mvar
-
+      loop
+    
 getPid :: ProcessHandle -> IO (Maybe CPid)
 getPid = flip withProcessHandle $ \ph_ ->
   case ph_ of
