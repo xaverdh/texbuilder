@@ -8,6 +8,10 @@ import System.INotify
 import System.Directory
 import System.FilePath
 
+isTexFile :: FilePath -> Bool
+isTexFile path = takeExtension path == ".tex"
+
+
 type BinSem = MVar ()
 
 newBinSem :: IO BinSem
