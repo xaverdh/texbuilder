@@ -1,3 +1,4 @@
+{-# language PackageImports, LambdaCase #-}
 module TexBuilder.CompileThread
   ( compileThread
   , compileThreadDir )
@@ -8,10 +9,26 @@ import TexBuilder.Engine
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
+import "cryptonite" Crypto.Hash
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString as B
+import qualified Data.Map as M
+
 import Control.Monad
 import Control.Monad.Extra
+import Control.Monad.State
+import Control.DeepSeq
+
 import System.INotify
 import Control.Concurrent.MVar
+
+
+
+data CompileLoopState = CompileLoopState
+  { hashes :: M.Map FilePath (Digest MD5)
+  , watchMVar :: MVar FilePath }
+
+mkCLS = CompileLoopState M.empty
 
 
 compileThreadDir :: FilePath -- ^ Path of the directory to watch
@@ -21,36 +38,49 @@ compileThreadDir :: FilePath -- ^ Path of the directory to watch
   --   pdf view should be updated.
   -> IO ()
 compileThreadDir dir run sem = do
-  mvar <- newEmptyMVar
   withINotify $ \inotify ->
      let watch = void . addWatch inotify [Modify,Create] dir
-      in compileThreadDir' run watch sem mvar
+      in compileThreadDir' run watch sem
 
 
 compileThreadDir' :: IO PP.Doc
   -> ((Event -> IO ()) -> IO ())
   -> BinSem
-  -> MVar PP.Doc
   -> IO ()
-compileThreadDir' run watch sem mvar =
-  watch go >> logLoop
+compileThreadDir' run watch viewSem = do
+  wMVar <- newEmptyMVar
+  watch (watcherThread wMVar watch)
+  evalStateT compileLoop $ mkCLS wMVar
   where
-    go event = do
-      case event of
-        Modified False mbPath -> whenJust mbPath
-          $ \path -> when (isTexFile path) go'
-        Created False path -> when (isTexFile path) go'
-        Ignored -> go' >> watch go
-        _ -> pure ()
+    compileLoop = do
+      path <- lift . takeMVar =<< gets watchMVar
+      -- ^ Wait for watcher thread to signal potential changes
+      newHash <- lift (hashlazy <$> LB.readFile path)
+      -- ^ Hash the file in question
+      deepseq newHash $ do
+        table <- gets hashes
+        case M.lookup path table of -- ^ lookup old hash
+          Nothing -> go
+          Just oldHash -> when (oldHash /= newHash) go
+        -- ^ Compile when file was changed
+        modify $ \st -> st { hashes = M.insert path newHash table }
+        -- ^ Write new hash value
+        compileLoop
+    go = lift $ do
+      run >>= PP.putDoc
+      signal viewSem
 
-    go' = void $ do
-      res <- run
-      putMVar mvar res
-      signal sem
-
-    logLoop  = do
-      takeMVar mvar >>= PP.putDoc
-      logLoop
+watcherThread :: MVar FilePath
+  -> ((Event -> IO ()) -> IO ())
+  -> Event -> IO ()
+watcherThread wMVar watch = \case
+  Modified False mbPath ->
+    whenJust mbPath $ \path ->
+      when (isTexFile path) $ putMVar wMVar path
+  Created False path ->
+    when (isTexFile path) $ putMVar wMVar path
+  Ignored -> watch (watcherThread wMVar watch)
+  _ -> pure ()
 
 
 
