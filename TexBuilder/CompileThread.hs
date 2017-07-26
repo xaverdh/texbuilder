@@ -24,7 +24,7 @@ compileThreadDir dir run sem = do
   mvar <- newEmptyMVar
   withINotify $ \inotify ->
      let watch = void . addWatch inotify [Modify,Create] dir
-      in compileThread' run watch sem mvar
+      in compileThreadDir' run watch sem mvar
 
 
 compileThreadDir' :: IO PP.Doc
