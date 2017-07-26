@@ -19,7 +19,6 @@ main = execParser parser >>= id
     opts = pure texBuilder
       <*> texOpt
       <*> optional pdfOpt
-      <*> nodirSwitch
       <*> noluaFlag
       <*> nolatexmkFlag
       <*> numCompOpt
@@ -34,10 +33,16 @@ texOpt = option str
   ( short 't' <> long "tex" <> metavar "TEXFILE"
   <> help "The main tex file to compile." )
 
-nodirSwitch = switch
-  ( long "no-dir"
-  <> help "Do not watch all tex files in the directory,\
-          \ only the main file." )
+-- | not yet ready
+fileTypesOpt = option str
+  ( short 'f' <> long "file-types"
+  <> help "Watch for changes of all files in the directory,\
+          \ with these file endings." )
+
+-- | not yet ready
+watchOpt = option str
+  ( short 'w' <> long "watch"
+  <> help "Watch for changes of these files ONLY." )
 
 noluaFlag = flag LuaLaTex PdfLaTex
   ( long "noluatex"

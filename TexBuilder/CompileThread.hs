@@ -1,7 +1,6 @@
 {-# language PackageImports, LambdaCase #-}
 module TexBuilder.CompileThread
-  ( compileThread
-  , compileThreadDir )
+  ( compileThread )
 where
 
 import TexBuilder.Utils
@@ -31,23 +30,23 @@ data CompileLoopState = CompileLoopState
 mkCLS = CompileLoopState M.empty
 
 
-compileThreadDir :: FilePath -- ^ Path of the directory to watch
+compileThread :: FilePath -- ^ Path of the directory to watch
   -> IO PP.Doc -- ^ The code compilation action
   -> BinSem
   -- ^ Signaling semaphore to communicate when the
   --   pdf view should be updated.
   -> IO ()
-compileThreadDir dir run sem = do
+compileThread dir run sem = do
   withINotify $ \inotify ->
      let watch = void . addWatch inotify [Modify,Create] dir
-      in compileThreadDir' run watch sem
+      in compileThread' run watch sem
 
 
-compileThreadDir' :: IO PP.Doc
+compileThread' :: IO PP.Doc
   -> ((Event -> IO ()) -> IO ())
   -> BinSem
   -> IO ()
-compileThreadDir' run watch viewSem = do
+compileThread' run watch viewSem = do
   wMVar <- newEmptyMVar
   watch (watcherThread wMVar watch)
   evalStateT compileLoop $ mkCLS wMVar
@@ -81,41 +80,6 @@ watcherThread wMVar watch = \case
     when (isTexFile path) $ putMVar wMVar path
   Ignored -> watch (watcherThread wMVar watch)
   _ -> pure ()
-
-
-
-compileThread :: FilePath -- ^ Path of the tex file
-  -> IO PP.Doc -- ^ The code compilation action
-  -> BinSem
-  -- ^ Signaling semaphore to communicate when the
-  --   pdf view should be updated.
-  -> IO ()
-compileThread texfile run sem = do
-  mvar <- newEmptyMVar
-  withINotify $ \inotify ->
-     let watch = void . addWatch inotify [Modify] texfile
-      in compileThread' run watch sem mvar
-
-
-compileThread' :: IO PP.Doc
-  -> ((Event -> IO ()) -> IO ())
-  -> BinSem
-  -> MVar PP.Doc
-  -> IO ()
-compileThread' run watch sem mvar =
-  watch go >> logLoop
-  where
-    go event = do
-      res <- run
-      putMVar mvar res
-      signal sem
-      case event of
-        Ignored -> watch go
-        _ -> pure ()
-
-    logLoop  = do
-      takeMVar mvar >>= PP.putDoc
-      logLoop
 
 
 
