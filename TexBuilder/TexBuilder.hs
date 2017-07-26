@@ -29,12 +29,13 @@ data UseLatexMk = LatexMk | NoLatexMk
 
 texBuilder :: FilePath
   -> Maybe FilePath
+  -> Bool
   -> UseEngine
   -> UseLatexMk
   -> Natural
   -> [String]
   -> IO ()
-texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
+texBuilder texfile mbf noDir useEngine useLatexmk nrecomp extraArgs = do
   issueWarning
   -- ^ Issue warning if appropriate
   assertFileEx texfile
@@ -43,13 +44,18 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
   -- ^ Do an initial compile run if appropriate
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
-  tid <- forkIO $ compileThread texfile run sem
+  tid <- forkIO $
+    if noDir
+      then compileThread texfile run sem
+      else compileThreadDir texDir run sem
   -- ^ The thread which compiles the tex code
   onFileEx pdffile (mupdfView pdffile sem)
   -- ^ Enter the main thread which updates the pdf view
   putStrLn "mupdf exited, terminating"
   killThread tid
   where
+    texDir = takeDirectory texfile
+    
     run = compile engine texfile pdffile extraArgs
 
     pdffile = fromMaybe (texfile -<.> "pdf") mbf

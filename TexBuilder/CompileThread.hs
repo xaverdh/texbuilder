@@ -1,5 +1,6 @@
 module TexBuilder.CompileThread
-  ( compileThread )
+  ( compileThread
+  , compileThreadDir )
 where
 
 import TexBuilder.Utils
