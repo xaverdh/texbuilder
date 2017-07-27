@@ -30,7 +30,6 @@ import System.IO.Temp
 import Control.Concurrent
 import Control.Concurrent.MVar
 
-import Debug.Trace
 
 data UseEngine = LuaLaTex | PdfLaTex
 data UseLatexMk = LatexMk | NoLatexMk
@@ -114,17 +113,6 @@ withInitialHashes :: IO [FilePath]
 withInitialHashes listSrc k = do
   files <- listSrc
   withHashes files $ k . M.fromList . zip files
-
-
-copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
-copyRelative dir1 dir2 file = do
-  dir1' <- makeAbsolute dir1
-  let relFile = makeRelative dir1' file
-  let destFile = dir2 </> relFile
-  let destDir = takeDirectory destFile
-  createDirectoryIfMissing True destDir 
-  traceShow [dir1',dir2,file,destFile] $ pure ()
-  copyFile file destFile
 
 
 withTmpDirSetup :: FilePath

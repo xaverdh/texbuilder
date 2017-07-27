@@ -57,6 +57,20 @@ searchFilesWith f dirs = do
   pure $ filter f paths
 
 
+-- | Copy file /file/ from dir1 to dir2, creating
+--   directories as needed. The path of the resulting
+--   copy relative to dir2 will be the same as the path
+--   of the original file relative dir1
+copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
+copyRelative dir1 dir2 file = do
+  dir1' <- makeAbsolute dir1
+  let relFile = makeRelative dir1' file
+  let destFile = dir2 </> relFile
+  let destDir = takeDirectory destFile
+  createDirectoryIfMissing True destDir
+  copyFile file destFile
+
+
 type BinSem = MVar ()
 
 newBinSem :: IO BinSem
