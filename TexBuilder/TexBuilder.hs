@@ -119,8 +119,8 @@ withInitialHashes listSrc k = do
 copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
 copyRelative dir1 dir2 file = do
   createDirectoryIfMissing True destDir
-  traceShowId file
-  traceShowId destFile
+  traceShow file $ pure ()
+  traceShow destFile $ pure ()
   copyFile file destFile
   where
     relFile = makeRelative dir1 file
