@@ -41,7 +41,7 @@ withHashes paths k = do
 listDirAbsolute :: FilePath -> IO [FilePath]
 listDirAbsolute dir = do
   dir' <- makeAbsolute dir
-  fmap (dir'</>) <$> listDirectory dir'
+  map (dir'</>) <$> listDirectory dir'
 
 listSubdirs :: Natural -> FilePath -> IO [FilePath]
 listSubdirs 0 _ = pure []

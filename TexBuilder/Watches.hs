@@ -10,6 +10,7 @@ import Control.Monad
 import Control.Monad.Extra
 import Control.Concurrent.MVar
 import System.INotify
+import System.Directory
 
 import Numeric.Natural
 
@@ -38,12 +39,14 @@ watcherThread :: MVar FilePath -- ^ Communication MVar
 watcherThread wMVar fileFilter = \case
   Modified False mbPath ->
     whenJust mbPath $ \path ->
-      when (fileFilter path) $ putMVar wMVar path
+      when (fileFilter path) $ post path
   Created False path ->
-    when (fileFilter path) $ putMVar wMVar path
+    when (fileFilter path) $ post path
   Ignored -> pure ()
     -- ^ TODO: communicate this and other failures to main thread
     --         via MVar FilePath => MVar (Either Err FilePath)
   _ -> pure ()
+  where
+    post path = makeAbsolute path >>= putMVar wMVar
 
 
