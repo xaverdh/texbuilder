@@ -44,12 +44,12 @@ listDirAbsolute dir = do
   map (dir'</>) <$> listDirectory dir'
 
 listSubdirs :: Natural -> FilePath -> IO [FilePath]
-listSubdirs 0 _ = pure []
+listSubdirs 0 dir = pure [dir]
 listSubdirs depth dir = do
   paths <- listDirAbsolute dir
   dirs <- filterM doesDirectoryExist paths
   subdirs <- forM dirs $ listSubdirs (depth-1)
-  pure $ dirs <> join subdirs
+  pure $ dir : join subdirs
 
 searchFilesWith :: (FilePath -> Bool) -> [FilePath] -> IO [FilePath]
 searchFilesWith f dirs = do
