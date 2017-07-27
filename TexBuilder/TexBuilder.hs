@@ -35,12 +35,15 @@ data UseLatexMk = LatexMk | NoLatexMk
 texBuilder :: FilePath
   -> Maybe FilePath
   -> Exts
+  -> Natural
   -> UseEngine
   -> UseLatexMk
   -> Natural
   -> [String]
   -> IO ()
-texBuilder texfile mbf exts useEngine useLatexmk nrecomp extraArgs = do
+texBuilder 
+  texfile mbPdfFile exts depth useEngine useLatexmk
+  nrecomp extraArgs = do
   issueWarning
   -- ^ Issue warning if appropriate
   assertFileEx texfile
@@ -50,8 +53,8 @@ texBuilder texfile mbf exts useEngine useLatexmk nrecomp extraArgs = do
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
   tid <- forkIO $ 
-    withInitialHashes texDir fileFilter $ \hashes ->
-      withWatches texDir fileFilter $ \wMVar ->
+    withInitialHashes depth texDir fileFilter $ \hashes ->
+      withWatches depth texDir fileFilter $ \wMVar ->
         compileThread run sem wMVar hashes
   -- ^ The thread which compiles the tex code
   onFileEx pdffile ( mupdfView pdffile sem )
@@ -65,7 +68,7 @@ texBuilder texfile mbf exts useEngine useLatexmk nrecomp extraArgs = do
     
     run = compile engine texfile pdffile extraArgs
 
-    pdffile = fromMaybe (texfile -<.> "pdf") mbf
+    pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
 
     engine = case (useEngine,useLatexmk) of
       (LuaLaTex,LatexMk) -> luaLaTexMk
@@ -90,14 +93,15 @@ initialCompile pdffile run =
     putStrLn "No ouput file detected, compiling."
     run >>= PP.putDoc
 
-withInitialHashes :: FilePath
+withInitialHashes :: Natural
+  -> FilePath
   -> ( FilePath -> Bool )
   -> ( M.Map FilePath (Digest MD5) -> IO b)
   -> IO b
-withInitialHashes texDir fileFilter k = do
-  files <- filter fileFilter <$> listDirectory texDir
+withInitialHashes depth texDir fileFilter k = do
+  subdirs <- listSubdirs depth texDir
+  files <- searchFilesWith fileFilter subdirs
   withHashes files $ k . M.fromList . zip files
-
 
 assertFileEx :: FilePath -> IO ()
 assertFileEx file =

@@ -4,38 +4,46 @@ module TexBuilder.Watches
 where
 
 
+import TexBuilder.Utils
+
 import Control.Monad
 import Control.Monad.Extra
 import Control.Concurrent.MVar
 import System.INotify
 
+import Numeric.Natural
 
-withWatches :: FilePath -- ^ Path of the directory to watch
+
+withWatches :: Natural -- ^ Depth to descend into directories
+  -> FilePath -- ^ Path of the directory to watch
   -> (FilePath -> Bool) -- ^ File filter
   -> (MVar FilePath -> IO b) -- ^ Continuation
   -> IO b
-withWatches dir fileFilter k =
+withWatches depth texDir fileFilter k =
   withINotify $ \inotify -> do
-    let watch = void . addWatch inotify [Modify,Create,Delete] dir
     wMVar <- newEmptyMVar
-    watch (watcherThread wMVar watch fileFilter)
+    subdirs <- listSubdirs depth texDir
+    forM_ subdirs $ watch wMVar inotify
     k wMVar
+  where
+    watch mvar inotify dir = void $ addWatch inotify
+      [Modify,Create,Delete] dir
+      ( watcherThread mvar fileFilter )
 
 
 watcherThread :: MVar FilePath -- ^ Communication MVar
-  -> ((Event -> IO ()) -> IO ()) -- ^ Watch action
   -> (FilePath -> Bool) -- ^ File filter
   -> Event -- ^ Recieved event
   -> IO ()
-watcherThread wMVar watch fileFilter = go
-  where
-    go = \case
-      Modified False mbPath ->
-        whenJust mbPath $ \path ->
-          when (fileFilter path) $ putMVar wMVar path
-      Created False path ->
-        when (fileFilter path) $ putMVar wMVar path
-      Ignored -> watch go
-      _ -> pure ()
+watcherThread wMVar fileFilter = \case
+  Modified False mbPath ->
+    whenJust mbPath $ \path ->
+      when (fileFilter path) $ putMVar wMVar path
+  Created False path ->
+    when (fileFilter path) $ putMVar wMVar path
+  Ignored -> pure ()
+    -- ^ TODO: communicate this and other failures to main thread
+    --         via MVar FilePath => MVar (Either Err FilePath)
+  _ -> pure ()
 
 

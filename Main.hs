@@ -21,6 +21,7 @@ main = execParser parser >>= id
       <*> texOpt
       <*> optional pdfOpt
       <*> fileTypesOpt
+      <*> depthOpt
       -- <*> watchOpt
       <*> noluaFlag
       <*> nolatexmkFlag
@@ -41,6 +42,11 @@ fileTypesOpt = option (maybeReader readExts)
   <> showDefaultWith showExts <> metavar "EXTENSIONS"
   <> help "Watch for changes of all files in the directory,\
           \ with these file endings." )
+
+depthOpt = option auto
+  ( short 'd' <> long "depth" <> value 3
+  <> showDefault <> metavar "DEPTH"
+  <> help "The depth to descend into directories." )
 
 -- | not yet ready
 watchOpt = option str

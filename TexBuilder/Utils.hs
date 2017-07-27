@@ -14,6 +14,7 @@ import System.FilePath
 import "cryptonite" Crypto.Hash
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B
+import Numeric.Natural
 
 withHash :: (MonadIO io,HashAlgorithm a)
   => FilePath -> (Digest a -> io b) -> io b
@@ -36,9 +37,18 @@ withHashes paths k = do
   --   _current_ state of the file).
 
 
+listSubdirs :: Natural -> FilePath -> IO [FilePath]
+listSubdirs depth
+  | depth == 0 = pure . pure
+  | True = \dir -> do
+    paths <- listDirectory dir
+    dirs <- mapM makeAbsolute paths
+      >>= filterM doesDirectoryExist
+    fmap join $ forM dirs $ listSubdirs (depth-1)
 
-isTexFile :: FilePath -> Bool
-isTexFile path = takeExtension path == ".tex"
+searchFilesWith :: (FilePath -> Bool) -> [FilePath] -> IO [FilePath]
+searchFilesWith f dirs =
+  filter f . join <$> forM dirs listDirectory
 
 
 type BinSem = MVar ()
