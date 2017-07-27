@@ -47,8 +47,12 @@ listSubdirs depth
     fmap join $ forM dirs $ listSubdirs (depth-1)
 
 searchFilesWith :: (FilePath -> Bool) -> [FilePath] -> IO [FilePath]
-searchFilesWith f dirs =
-  filter f . join <$> forM dirs listDirectory
+searchFilesWith f dirs = do
+  paths <- join <$> forM dirs listDirAbsolute
+  pure $ filter f paths
+  where
+    listDirAbsolute dir = 
+      fmap (dir</>) <$> listDirectory dir
 
 
 type BinSem = MVar ()
