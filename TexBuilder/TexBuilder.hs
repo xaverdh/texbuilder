@@ -118,13 +118,13 @@ withInitialHashes listSrc k = do
 
 copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
 copyRelative dir1 dir2 file = do
-  createDirectoryIfMissing True destDir
-  traceShow [dir1,dir2,file,destFile] $ pure ()
+  dir1' <- makeAbsolute dir1
+  let relFile = makeRelative dir1' file
+  let destFile = dir2 </> relFile
+  let destDir = takeDirectory destFile
+  createDirectoryIfMissing True destDir 
+  traceShow [dir1',dir2,file,destFile] $ pure ()
   copyFile file destFile
-  where
-    relFile = makeRelative dir1 file
-    destFile = dir2 </> relFile
-    destDir = takeDirectory destFile
 
 
 withTmpDirSetup :: FilePath
