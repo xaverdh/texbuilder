@@ -14,6 +14,7 @@ import System.FilePath
 import "cryptonite" Crypto.Hash
 import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B
+import Data.Monoid
 import Numeric.Natural
 
 withHash :: (MonadIO io,HashAlgorithm a)
@@ -37,22 +38,23 @@ withHashes paths k = do
   --   _current_ state of the file).
 
 
+listDirAbsolute :: FilePath -> IO [FilePath]
+listDirAbsolute dir = do
+  dir' <- makeAbsolute dir
+  fmap (dir'</>) <$> listDirectory dir'
+
 listSubdirs :: Natural -> FilePath -> IO [FilePath]
-listSubdirs depth
-  | depth == 0 = pure . pure
-  | True = \dir -> do
-    paths <- listDirectory dir
-    dirs <- mapM makeAbsolute paths
-      >>= filterM doesDirectoryExist
-    fmap join $ forM dirs $ listSubdirs (depth-1)
+listSubdirs 0 _ = pure []
+listSubdirs depth dir = do
+  paths <- listDirAbsolute dir
+  dirs <- filterM doesDirectoryExist paths
+  subdirs <- forM dirs $ listSubdirs (depth-1)
+  pure $ dirs <> join subdirs
 
 searchFilesWith :: (FilePath -> Bool) -> [FilePath] -> IO [FilePath]
 searchFilesWith f dirs = do
   paths <- join <$> forM dirs listDirAbsolute
   pure $ filter f paths
-  where
-    listDirAbsolute dir = 
-      fmap (dir</>) <$> listDirectory dir
 
 
 type BinSem = MVar ()
