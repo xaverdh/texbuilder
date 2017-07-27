@@ -25,7 +25,6 @@ import System.Directory
 import System.FilePath
 import System.Process
 import System.Exit
-import System.IO.Temp
 import System.Environment (setEnv)
 import System.Posix.Time (epochTime)
 
@@ -140,26 +139,25 @@ pdfLaTexMk outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
--- | Compile the tex code in a fresh directory and, if successful,
+-- | Compile the tex code and (if successful)
 --   write the output to given path. Returns human readable
 --   information about the build success / failure.
 compile :: Engine
   -> FilePath
   -> FilePath
   -> [String]
+  -> FilePath
   -> IO PP.Doc
-compile engine texfile pdffile extraArgs =
-  withSystemTempDirectory "texbuilder" $ \dir -> do
-    copyFile texfile (dir </> texfile)
-    engine dir texfile extraArgs >>= \case
-      Left err -> pure $ PP.red $ PP.text err
-      Right outFile -> do
-        copyFile outFile pdffile
-        pure $ PP.green $
-          PP.text "Successful build from"
-          PP.<+> PP.text dir <> PP.hardline
+compile engine texfile pdffile extraArgs dir =
+  engine dir texfile extraArgs >>= \case
+    Left err -> pure $ PP.red $ PP.text err
+    Right outFile -> do
+      copyFile outFile pdffile
+      pure $ PP.green $
+        PP.text "Successful build from"
+        PP.<+> PP.text dir <> PP.hardline
 
-
+  
 
 
 

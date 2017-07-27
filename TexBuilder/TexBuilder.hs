@@ -26,6 +26,7 @@ import Options.Applicative.Builder
 import System.Directory
 import System.FilePath
 import System.Exit
+import System.IO.Temp
 import Control.Concurrent
 import Control.Concurrent.MVar
 
@@ -53,7 +54,7 @@ texBuilder
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
   tid <- forkIO $ 
-    withInitialHashes depth texDir fileFilter $ \hashes ->
+    withInitialHashes listSrc $ \hashes ->
       withWatches depth texDir fileFilter $ \wMVar ->
         compileThread run sem wMVar hashes
   -- ^ The thread which compiles the tex code
@@ -66,7 +67,10 @@ texBuilder
 
     texDir = takeDirectory texfile
     
-    run = compile engine texfile pdffile extraArgs
+    listSrc = listSourceFiles depth texDir fileFilter
+    
+    run = withTmpDirSetup listSrc $
+      compile engine texfile pdffile extraArgs
 
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
 
@@ -93,15 +97,31 @@ initialCompile pdffile run =
     putStrLn "No ouput file detected, compiling."
     run >>= PP.putDoc
 
-withInitialHashes :: Natural
+listSourceFiles :: Natural
   -> FilePath
   -> ( FilePath -> Bool )
+  -> IO [FilePath]
+listSourceFiles depth texDir fileFilter = 
+  listSubdirs depth texDir
+  >>= searchFilesWith fileFilter
+
+withInitialHashes :: IO [FilePath]
   -> ( M.Map FilePath (Digest MD5) -> IO b)
   -> IO b
-withInitialHashes depth texDir fileFilter k = do
-  subdirs <- listSubdirs depth texDir
-  files <- searchFilesWith fileFilter subdirs
+withInitialHashes listSrc k = do
+  files <- listSrc
   withHashes files $ k . M.fromList . zip files
+
+
+withTmpDirSetup :: IO [FilePath]
+  -> (FilePath -> IO a) -> IO a
+withTmpDirSetup listSrc k =
+  withSystemTempDirectory "texbuilder" $ \dir -> do
+    files <- listSrc
+    forM_ files $ \file -> 
+      copyFile file (dir </> takeFileName file)
+    k dir
+
 
 assertFileEx :: FilePath -> IO ()
 assertFileEx file =
