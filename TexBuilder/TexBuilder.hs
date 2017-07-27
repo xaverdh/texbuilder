@@ -43,13 +43,15 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
   -- ^ Do an initial compile run if appropriate
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
-  tid <- forkIO $ compileThread texDir run sem
+  tid <- forkIO $ compileThread texDir run sem fileFilter
   -- ^ The thread which compiles the tex code
   onFileEx pdffile (mupdfView pdffile sem)
   -- ^ Enter the main thread which updates the pdf view
   putStrLn "mupdf exited, terminating"
   killThread tid
   where
+    fileFilter path = isTexFile path
+
     texDir = takeDirectory texfile
     
     run = compile engine texfile pdffile extraArgs

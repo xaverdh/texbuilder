@@ -35,20 +35,22 @@ compileThread :: FilePath -- ^ Path of the directory to watch
   -> BinSem
   -- ^ Signaling semaphore to communicate when the
   --   pdf view should be updated.
+  -> (FilePath -> Bool) -- File filter
   -> IO ()
-compileThread dir run sem = do
+compileThread dir run sem fileFilter = do
   withINotify $ \inotify ->
      let watch = void . addWatch inotify [Modify,Create] dir
-      in compileThread' run watch sem
+      in compileThread' run watch sem fileFilter
 
 
 compileThread' :: IO PP.Doc
   -> ((Event -> IO ()) -> IO ())
   -> BinSem
+  -> (FilePath -> Bool) -- File filter
   -> IO ()
-compileThread' run watch viewSem = do
+compileThread' run watch viewSem fileFilter = do
   wMVar <- newEmptyMVar
-  watch (watcherThread wMVar watch)
+  watch (watcherThread wMVar watch fileFilter)
   evalStateT compileLoop $ mkCLS wMVar
   where
     compileLoop = do
@@ -65,20 +67,23 @@ compileThread' run watch viewSem = do
         modify $ \st -> st { hashes = M.insert path newHash table }
         -- ^ Write new hash value
         compileLoop
+    
     go = lift $ do
       run >>= PP.putDoc
       signal viewSem
 
 watcherThread :: MVar FilePath
   -> ((Event -> IO ()) -> IO ())
-  -> Event -> IO ()
-watcherThread wMVar watch = \case
+  -> (FilePath -> Bool) -- File filter
+  -> Event
+  -> IO ()
+watcherThread wMVar watch fileFilter = \case
   Modified False mbPath ->
     whenJust mbPath $ \path ->
-      when (isTexFile path) $ putMVar wMVar path
+      when (fileFilter path) $ putMVar wMVar path
   Created False path ->
-    when (isTexFile path) $ putMVar wMVar path
-  Ignored -> watch (watcherThread wMVar watch)
+    when (fileFilter path) $ putMVar wMVar path
+  Ignored -> watch (watcherThread wMVar watch fileFilter)
   _ -> pure ()
 
 
