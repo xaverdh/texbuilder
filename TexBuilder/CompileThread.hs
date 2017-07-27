@@ -5,6 +5,7 @@ where
 
 import TexBuilder.Utils
 import TexBuilder.Engine
+import TexBuilder.Watches
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
@@ -37,19 +38,15 @@ compileThread :: FilePath -- ^ Path of the directory to watch
   -> (FilePath -> Bool) -- File filter
   -> IO ()
 compileThread dir run sem fileFilter =
-  withINotify $ \inotify -> do
-    let watch = void . addWatch inotify [Modify,Create] dir
-    wMVar <- newEmptyMVar
-    watch (watcherThread wMVar watch fileFilter)
-    compileThread' run watch sem wMVar
+  withWatches dir fileFilter $ \wMVar ->
+    compileThread' run sem wMVar
 
 
 compileThread' :: IO PP.Doc
-  -> ((Event -> IO ()) -> IO ())
   -> BinSem
   -> MVar FilePath
   -> IO ()
-compileThread' run watch viewSem wMVar =
+compileThread' run viewSem wMVar =
   evalStateT compileLoop $ mkCLS wMVar
   where
     compileLoop = do
@@ -68,23 +65,5 @@ compileThread' run watch viewSem wMVar =
     go = lift $ do
       run >>= PP.putDoc
       signal viewSem
-
-watcherThread :: MVar FilePath
-  -> ((Event -> IO ()) -> IO ())
-  -> (FilePath -> Bool) -- File filter
-  -> Event
-  -> IO ()
-watcherThread wMVar watch fileFilter = go
-  where
-    go = \case
-      Modified False mbPath ->
-        whenJust mbPath $ \path ->
-          when (fileFilter path) $ putMVar wMVar path
-      Created False path ->
-        when (fileFilter path) $ putMVar wMVar path
-      Ignored -> watch go
-      _ -> pure ()
-
-
 
 
