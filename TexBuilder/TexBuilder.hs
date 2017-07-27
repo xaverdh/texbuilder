@@ -1,3 +1,4 @@
+{-# language PackageImports #-}
 module TexBuilder.TexBuilder
   ( texBuilder
   , UseEngine(..)
@@ -15,7 +16,9 @@ import Control.Monad
 import Control.Monad.Extra
 import Data.Monoid
 import Data.Maybe
+import qualified Data.Map as M
 import Numeric.Natural
+import "cryptonite" Crypto.Hash
 
 import Options.Applicative
 import Options.Applicative.Builder
@@ -44,11 +47,12 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
   -- ^ Do an initial compile run if appropriate
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
-  tid <- forkIO $
-    withWatches texDir fileFilter
-      ( compileThread run sem )
+  tid <- forkIO $ 
+    withInitialHashes texDir fileFilter $ \hashes ->
+      withWatches texDir fileFilter $ \wMVar ->
+        compileThread run sem wMVar hashes
   -- ^ The thread which compiles the tex code
-  onFileEx pdffile (mupdfView pdffile sem)
+  onFileEx pdffile ( mupdfView pdffile sem )
   -- ^ Enter the main thread which updates the pdf view
   putStrLn "mupdf exited, terminating"
   killThread tid
@@ -83,6 +87,14 @@ initialCompile pdffile run =
   unlessM (doesFileExist pdffile) $ do
     putStrLn "No ouput file detected, compiling."
     run >>= PP.putDoc
+
+withInitialHashes :: FilePath
+  -> ( FilePath -> Bool )
+  -> ( M.Map FilePath (Digest MD5) -> IO b)
+  -> IO b
+withInitialHashes texDir fileFilter k = do
+  files <- filter fileFilter <$> listDirectory texDir
+  withHashes files $ k . M.fromList . zip files
 
 
 assertFileEx :: FilePath -> IO ()

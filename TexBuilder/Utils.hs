@@ -24,6 +24,18 @@ withHash path k = do
   --   actually happen here (we want to capture the
   --   _current_ state of the file).
 
+withHashes ::
+  (MonadIO io,HashAlgorithm a,Traversable t,NFData (t (Digest a)))
+  => t FilePath -> (t (Digest a) -> io b) -> io b
+withHashes paths k = do
+  hashes <- forM paths $ \path ->
+    liftIO (hashlazy <$> LB.readFile path)
+  deepseq hashes $ k hashes
+  -- ^ deepseq is neccessary to force reading to
+  --   actually happen here (we want to capture the
+  --   _current_ state of the file).
+
+
 
 isTexFile :: FilePath -> Bool
 isTexFile path = takeExtension path == ".tex"

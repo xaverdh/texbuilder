@@ -11,8 +11,8 @@ import System.INotify
 
 
 withWatches :: FilePath -- ^ Path of the directory to watch
-  -> (FilePath -> Bool) -- File filter
-  -> (MVar FilePath -> IO b) -- Continuation
+  -> (FilePath -> Bool) -- ^ File filter
+  -> (MVar FilePath -> IO b) -- ^ Continuation
   -> IO b
 withWatches dir fileFilter k =
   withINotify $ \inotify -> do
@@ -24,7 +24,7 @@ withWatches dir fileFilter k =
 
 watcherThread :: MVar FilePath -- ^ Communication MVar
   -> ((Event -> IO ()) -> IO ()) -- ^ Watch action
-  -> (FilePath -> Bool) -- File filter
+  -> (FilePath -> Bool) -- ^ File filter
   -> Event -- ^ Recieved event
   -> IO ()
 watcherThread wMVar watch fileFilter = go

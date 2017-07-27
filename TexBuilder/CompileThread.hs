@@ -17,17 +17,16 @@ import qualified Data.Map as M
 import Control.Monad
 import Control.Monad.Extra
 import Control.Monad.State
+import Control.Concurrent.MVar
 
 import System.INotify
-import Control.Concurrent.MVar
+import System.Directory
 
 
 
 data CompileLoopState = CompileLoopState
-  { hashes :: M.Map FilePath (Digest MD5)
+  { oldHashes :: M.Map FilePath (Digest MD5)
   , watchMVar :: MVar FilePath }
-
-mkCLS = CompileLoopState M.empty
 
 
 compileThread :: IO PP.Doc -- ^ The code compilation action
@@ -36,20 +35,23 @@ compileThread :: IO PP.Doc -- ^ The code compilation action
   --   pdf view should be updated.
   -> MVar FilePath
   -- ^ Communication MVar for signaling file changes
+  -> M.Map FilePath (Digest MD5)
+  -- ^ Initial hashes
   -> IO ()
-compileThread run viewSem wMVar =
-  evalStateT compileLoop $ mkCLS wMVar
+compileThread run viewSem wMVar hashes =
+  evalStateT compileLoop $ CompileLoopState hashes wMVar
   where
     compileLoop = do
       path <- lift . takeMVar =<< gets watchMVar
       -- ^ Wait for watcher thread to signal potential changes
       withHash path $ \newHash -> do
-        table <- gets hashes
+        table <- gets oldHashes
         case M.lookup path table of -- ^ lookup old hash
           Nothing -> go
           Just oldHash -> when (oldHash /= newHash) go
         -- ^ Compile when file was changed
-        modify $ \st -> st { hashes = M.insert path newHash table }
+        modify $ \st ->
+          st { oldHashes = M.insert path newHash table }
         -- ^ Write new hash value
         compileLoop
     
