@@ -16,7 +16,7 @@ withWatches :: FilePath -- ^ Path of the directory to watch
   -> IO b
 withWatches dir fileFilter k =
   withINotify $ \inotify -> do
-    let watch = void . addWatch inotify [Modify,Create] dir
+    let watch = void . addWatch inotify [Modify,Create,Delete] dir
     wMVar <- newEmptyMVar
     watch (watcherThread wMVar watch fileFilter)
     k wMVar

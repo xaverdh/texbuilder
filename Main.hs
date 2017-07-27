@@ -38,7 +38,7 @@ texOpt = option str
 
 fileTypesOpt = option (maybeReader readExts)
   ( short 'f' <> long "file-types" <> value (Exts ["tex","bib"])
-  <> showDefaultWith showExts
+  <> showDefaultWith showExts <> metavar "EXTENSIONS"
   <> help "Watch for changes of all files in the directory,\
           \ with these file endings." )
 
