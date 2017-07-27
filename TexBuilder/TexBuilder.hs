@@ -69,7 +69,8 @@ texBuilder
     
     listSrcFiles = listSourceFiles depth texDir fileFilter
     
-    run = withTmpDirSetup texDir listSrcFiles $
+    run = -- withTmpDirSetup texDir listSrcFiles $
+      withStatefulTmpDirSetup "/tmp/texbuilder-debug" texDir listSrcFiles $
       compile engine texfile pdffile extraArgs
 
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
@@ -131,6 +132,15 @@ withTmpDirSetup texDir listSrc k =
     files <- listSrc
     forM_ files $ copyRelative texDir tmpdir
     k tmpdir
+
+withStatefulTmpDirSetup :: FilePath
+  -> FilePath
+  -> IO [FilePath]
+  -> ( FilePath -> IO a ) -> IO a
+withStatefulTmpDirSetup tmpdir texDir listSrc k = do
+  files <- listSrc
+  forM_ files $ copyRelative texDir tmpdir
+  k tmpdir
 
 
 assertFileEx :: FilePath -> IO ()
