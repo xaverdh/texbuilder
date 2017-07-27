@@ -11,6 +11,7 @@ import Control.Monad.Extra
 import Control.Concurrent.MVar
 import System.INotify
 import System.Directory
+import System.FilePath
 
 import Numeric.Natural
 
@@ -29,14 +30,15 @@ withWatches depth texDir fileFilter k =
   where
     watch mvar inotify dir = void $ addWatch inotify
       [Modify,Create,Delete] dir
-      ( watcherThread mvar fileFilter )
+      ( watcherThread dir mvar fileFilter )
 
 
-watcherThread :: MVar FilePath -- ^ Communication MVar
+watcherThread :: FilePath -- ^ Directory we are watching
+  -> MVar FilePath -- ^ Communication MVar
   -> (FilePath -> Bool) -- ^ File filter
   -> Event -- ^ Recieved event
   -> IO ()
-watcherThread wMVar fileFilter = \case
+watcherThread dir wMVar fileFilter = \case
   Modified False mbPath ->
     whenJust mbPath $ \path ->
       when (fileFilter path) $ post path
@@ -47,6 +49,6 @@ watcherThread wMVar fileFilter = \case
     --         via MVar FilePath => MVar (Either Err FilePath)
   _ -> pure ()
   where
-    post path = makeAbsolute path >>= putMVar wMVar
+    post path = putMVar wMVar (dir </> path)
 
 
