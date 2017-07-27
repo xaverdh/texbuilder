@@ -30,6 +30,8 @@ import System.IO.Temp
 import Control.Concurrent
 import Control.Concurrent.MVar
 
+import Debug.Trace
+
 data UseEngine = LuaLaTex | PdfLaTex
 data UseLatexMk = LatexMk | NoLatexMk
 
@@ -130,6 +132,7 @@ withTmpDirSetup :: FilePath
 withTmpDirSetup texDir listSrc k =
   withSystemTempDirectory "texbuilder" $ \tmpdir -> do
     files <- listSrc
+    traceShow files $ pure ()
     forM_ files $ copyRelative texDir tmpdir
     k tmpdir
 
