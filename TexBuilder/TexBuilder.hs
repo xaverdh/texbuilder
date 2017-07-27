@@ -54,7 +54,7 @@ texBuilder
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
   tid <- forkIO $ 
-    withInitialHashes listSrc $ \hashes ->
+    withInitialHashes listSrcFiles $ \hashes ->
       withWatches depth texDir fileFilter $ \wMVar ->
         compileThread run sem wMVar hashes
   -- ^ The thread which compiles the tex code
@@ -67,9 +67,9 @@ texBuilder
 
     texDir = takeDirectory texfile
     
-    listSrc = listSourceFiles depth texDir fileFilter
+    listSrcFiles = listSourceFiles depth texDir fileFilter
     
-    run = withTmpDirSetup listSrc $
+    run = withTmpDirSetup texDir listSrcFiles $
       compile engine texfile pdffile extraArgs
 
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
@@ -113,14 +113,24 @@ withInitialHashes listSrc k = do
   withHashes files $ k . M.fromList . zip files
 
 
-withTmpDirSetup :: IO [FilePath]
-  -> (FilePath -> IO a) -> IO a
-withTmpDirSetup listSrc k =
-  withSystemTempDirectory "texbuilder" $ \dir -> do
+copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
+copyRelative dir1 dir2 file = do
+  createDirectoryIfMissing True destDir
+  copyFile file destFile
+  where
+    relFile = makeRelative dir1 file
+    destFile = dir2 </> relFile
+    destDir = takeDirectory destFile
+
+
+withTmpDirSetup :: FilePath
+  -> IO [FilePath]
+  -> ( FilePath -> IO a ) -> IO a
+withTmpDirSetup texDir listSrc k =
+  withSystemTempDirectory "texbuilder" $ \tmpdir -> do
     files <- listSrc
-    forM_ files $ \file -> 
-      copyFile file (dir </> takeFileName file)
-    k dir
+    forM_ files $ copyRelative texDir tmpdir
+    k tmpdir
 
 
 assertFileEx :: FilePath -> IO ()
