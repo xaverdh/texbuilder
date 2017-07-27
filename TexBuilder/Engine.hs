@@ -17,6 +17,7 @@ import qualified Data.ByteString.Lazy as LB
 import qualified Data.ByteString as B
 import "cryptonite" Crypto.Hash
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
+import Data.Time.Clock.POSIX
 
 import Control.Monad.State
 import Control.DeepSeq
@@ -148,14 +149,19 @@ compile :: Engine
   -> [String]
   -> FilePath
   -> IO PP.Doc
-compile engine texfile pdffile extraArgs dir =
+compile engine texfile pdffile extraArgs dir = do
+  initT <- getPOSIXTime
   engine dir texfile extraArgs >>= \case
     Left err -> pure $ PP.red $ PP.text err
     Right outFile -> do
+      finalT <- getPOSIXTime
       copyFile outFile pdffile
       pure $ PP.green $
         PP.text "Successful build from"
         PP.<+> PP.text dir <> PP.hardline
+        PP.<+> PP.text "build time was"
+        PP.<+> (PP.text . show $ finalT - initT)
+        <> PP.hardline
 
   
 

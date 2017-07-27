@@ -145,8 +145,6 @@ withModRunAction statePolicy texDir listSrc run k =
     runIn wdir = withDirSetup wdir texDir listSrc run
 
 
-
-
 assertFileEx :: FilePath -> IO ()
 assertFileEx file =
   unlessM (doesFileExist file) $ do
