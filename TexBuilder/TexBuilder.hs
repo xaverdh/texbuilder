@@ -1,6 +1,7 @@
 {-# language PackageImports #-}
 module TexBuilder.TexBuilder
   ( texBuilder
+  , StatePolicy(..)
   , UseEngine(..)
   , UseLatexMk(..) )
 where
@@ -33,21 +34,22 @@ import Control.Concurrent.MVar
 
 data UseEngine = LuaLaTex | PdfLaTex
 data UseLatexMk = LatexMk | NoLatexMk
+data StatePolicy = Pure | Stateful | Persistent
 
 texBuilder :: FilePath
   -> Maybe FilePath
   -> Exts
   -> Natural
-  -> Either Bool Bool
+  -> StatePolicy
   -> UseEngine
   -> UseLatexMk
   -> Natural
   -> [String]
   -> IO ()
 texBuilder 
-  texfile mbPdfFile exts depth statefulness
+  texfile mbPdfFile exts depth statePolicy
   useEngine useLatexmk nrecomp extraArgs =
-  withModRunAction statefulness texDir listSrcFiles runRaw
+  withModRunAction statePolicy texDir listSrcFiles runRaw
     $ \run -> do
       issueWarning
       -- ^ Issue warning if appropriate
@@ -125,18 +127,18 @@ withDirSetup wdir texDir listSrc k = do
   forM_ files $ copyRelative texDir wdir
   k wdir
 
-withModRunAction :: Either Bool Bool
+withModRunAction :: StatePolicy
   -> FilePath
   -> IO [FilePath]
   -> ( FilePath -> IO PP.Doc )
   -> ( IO PP.Doc -> IO a ) -> IO a
-withModRunAction statefulness texDir listSrc run k =
-  case statefulness of
-    Right True -> k $ withTmp $ \tmpdir -> runIn tmpdir
+withModRunAction statePolicy texDir listSrc run k =
+  case statePolicy of
+    Pure -> k $ withTmp $ \tmpdir -> runIn tmpdir
     -- ^ Create fresh temporary directory every time
-    Left True -> withTmp $ \tmpdir -> k $ runIn tmpdir
+    Stateful-> withTmp $ \tmpdir -> k $ runIn tmpdir
     -- ^ Run in stateful temporary directory
-    _ -> getCurrentDirectory >>= \wdir -> k $ runIn wdir
+    Persistent -> getCurrentDirectory >>= \wdir -> k $ runIn wdir
     -- ^ Run in persistent working directory
   where
     withTmp = withSystemTempDirectory "texbuilder"
