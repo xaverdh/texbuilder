@@ -132,7 +132,6 @@ withTmpDirSetup :: FilePath
 withTmpDirSetup texDir listSrc k =
   withSystemTempDirectory "texbuilder" $ \tmpdir -> do
     files <- listSrc
-    traceShow files $ pure ()
     forM_ files $ copyRelative texDir tmpdir
     k tmpdir
 
@@ -142,6 +141,7 @@ withStatefulTmpDirSetup :: FilePath
   -> ( FilePath -> IO a ) -> IO a
 withStatefulTmpDirSetup tmpdir texDir listSrc k = do
   files <- listSrc
+  traceShow files $ pure ()
   forM_ files $ copyRelative texDir tmpdir
   k tmpdir
 
