@@ -38,31 +38,34 @@ texBuilder :: FilePath
   -> Maybe FilePath
   -> Exts
   -> Natural
+  -> Either Bool Bool
   -> UseEngine
   -> UseLatexMk
   -> Natural
   -> [String]
   -> IO ()
 texBuilder 
-  texfile mbPdfFile exts depth useEngine useLatexmk
-  nrecomp extraArgs = do
-  issueWarning
-  -- ^ Issue warning if appropriate
-  assertFileEx texfile
-  -- ^ Assert that the tex file exists
-  initialCompile pdffile run
-  -- ^ Do an initial compile run if appropriate
-  sem <- newBinSem
-  -- ^ Signaling semaphore connecting the threads
-  tid <- forkIO $ 
-    withInitialHashes listSrcFiles $ \hashes ->
-      withWatches depth texDir fileFilter $ \wMVar ->
-        compileThread run sem wMVar hashes
-  -- ^ The thread which compiles the tex code
-  onFileEx pdffile ( mupdfView pdffile sem )
-  -- ^ Enter the main thread which updates the pdf view
-  putStrLn "mupdf exited, terminating"
-  killThread tid
+  texfile mbPdfFile exts depth statefulness
+  useEngine useLatexmk nrecomp extraArgs =
+  withModRunAction statefulness texDir listSrcFiles runRaw
+    $ \run -> do
+      issueWarning
+      -- ^ Issue warning if appropriate
+      assertFileEx texfile
+      -- ^ Assert that the tex file exists
+      initialCompile pdffile run
+      -- ^ Do an initial compile run if appropriate
+      sem <- newBinSem
+      -- ^ Signaling semaphore connecting the threads
+      tid <- forkIO $ 
+        withInitialHashes listSrcFiles $ \hashes ->
+          withWatches depth texDir fileFilter $ \wMVar ->
+            compileThread run sem wMVar hashes
+      -- ^ The thread which compiles the tex code
+      onFileEx pdffile ( mupdfView pdffile sem )
+      -- ^ Enter the main thread which updates the pdf view
+      putStrLn "mupdf exited, terminating"
+      killThread tid
   where
     fileFilter = extFilter exts
 
@@ -70,9 +73,7 @@ texBuilder
     
     listSrcFiles = listSourceFiles depth texDir fileFilter
     
-    run = -- withTmpDirSetup texDir listSrcFiles $
-      withStatefulTmpDirSetup "/tmp/texbuilder-debug" texDir listSrcFiles $
-      compile engine texfile pdffile extraArgs
+    runRaw = compile engine texfile pdffile extraArgs
 
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
 
@@ -115,23 +116,33 @@ withInitialHashes listSrc k = do
   withHashes files $ k . M.fromList . zip files
 
 
-withTmpDirSetup :: FilePath
-  -> IO [FilePath]
-  -> ( FilePath -> IO a ) -> IO a
-withTmpDirSetup texDir listSrc k =
-  withSystemTempDirectory "texbuilder" $ \tmpdir -> do
-    files <- listSrc
-    forM_ files $ copyRelative texDir tmpdir
-    k tmpdir
-
-withStatefulTmpDirSetup :: FilePath
+withDirSetup :: FilePath
   -> FilePath
   -> IO [FilePath]
   -> ( FilePath -> IO a ) -> IO a
-withStatefulTmpDirSetup tmpdir texDir listSrc k = do
+withDirSetup wdir texDir listSrc k = do
   files <- listSrc
-  forM_ files $ copyRelative texDir tmpdir
-  k tmpdir
+  forM_ files $ copyRelative texDir wdir
+  k wdir
+
+withModRunAction :: Either Bool Bool
+  -> FilePath
+  -> IO [FilePath]
+  -> ( FilePath -> IO PP.Doc )
+  -> ( IO PP.Doc -> IO a ) -> IO a
+withModRunAction statefulness texDir listSrc run k =
+  case statefulness of
+    Right True -> k $ withTmp $ \tmpdir -> runIn tmpdir
+    -- ^ Create fresh temporary directory every time
+    Left True -> withTmp $ \tmpdir -> k $ runIn tmpdir
+    -- ^ Run in stateful temporary directory
+    _ -> getCurrentDirectory >>= \wdir -> k $ runIn wdir
+    -- ^ Run in persistent working directory
+  where
+    withTmp = withSystemTempDirectory "texbuilder"
+    runIn wdir = withDirSetup wdir texDir listSrc run
+
+
 
 
 assertFileEx :: FilePath -> IO ()

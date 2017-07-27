@@ -22,6 +22,7 @@ main = execParser parser >>= id
       <*> optional pdfOpt
       <*> fileTypesOpt
       <*> depthOpt
+      <*> (fmap Left statefulOpt <|> fmap Right persistOpt)
       -- <*> watchOpt
       <*> noluaFlag
       <*> nolatexmkFlag
@@ -47,6 +48,20 @@ depthOpt = option auto
   ( short 'd' <> long "depth" <> value 3
   <> showDefault <> metavar "DEPTH"
   <> help "The depth to descend into directories." )
+
+statefulOpt = switch
+  ( short 's' <> long "stateful"
+  <> showDefault
+  <> help "Run in stateful mode, reusing results from\
+          \ previous compile runs. This improves efficiency\
+          \ but may lead to artifacts in some situations.")
+
+persistOpt = switch
+  ( short 'p' <> long "persistent"
+  <> showDefault
+  <> help "Run in persistent mode, using the main directory\
+          \ for building. If the state gets messed up, you\
+          \ will have to fix it.")
 
 -- | not yet ready
 watchOpt = option str
