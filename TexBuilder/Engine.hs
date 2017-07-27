@@ -9,6 +9,8 @@ module TexBuilder.Engine
   , pdfLaTexMk )
 where
 
+import TexBuilder.Utils
+
 import Data.Monoid
 import Numeric.Natural
 import qualified Data.ByteString.Lazy as LB
@@ -64,12 +66,7 @@ recompileSt run = get >>= \case
   where
     go k = lift run >>= \case
       Left err -> failed err
-      Right path -> do
-        hash <- lift (hashlazy <$> LB.readFile path)
-        hash `deepseq` k path hash
-        -- ^ deepseq is neccessary to force reading to
-        --   actually happen here. Otherwise both hash and 
-        --   oldHash will be created from the new file...
+      Right path -> withHash path $ k path
     
     succ i path hash = do
       put $ StSucc (i-1) path hash

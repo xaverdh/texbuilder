@@ -16,7 +16,6 @@ import qualified Data.Map as M
 import Control.Monad
 import Control.Monad.Extra
 import Control.Monad.State
-import Control.DeepSeq
 
 import System.INotify
 import Control.Concurrent.MVar
@@ -37,28 +36,26 @@ compileThread :: FilePath -- ^ Path of the directory to watch
   --   pdf view should be updated.
   -> (FilePath -> Bool) -- File filter
   -> IO ()
-compileThread dir run sem fileFilter = do
-  withINotify $ \inotify ->
-     let watch = void . addWatch inotify [Modify,Create] dir
-      in compileThread' run watch sem fileFilter
+compileThread dir run sem fileFilter =
+  withINotify $ \inotify -> do
+    let watch = void . addWatch inotify [Modify,Create] dir
+    wMVar <- newEmptyMVar
+    watch (watcherThread wMVar watch fileFilter)
+    compileThread' run watch sem wMVar
 
 
 compileThread' :: IO PP.Doc
   -> ((Event -> IO ()) -> IO ())
   -> BinSem
-  -> (FilePath -> Bool) -- File filter
+  -> MVar FilePath
   -> IO ()
-compileThread' run watch viewSem fileFilter = do
-  wMVar <- newEmptyMVar
-  watch (watcherThread wMVar watch fileFilter)
+compileThread' run watch viewSem wMVar =
   evalStateT compileLoop $ mkCLS wMVar
   where
     compileLoop = do
       path <- lift . takeMVar =<< gets watchMVar
       -- ^ Wait for watcher thread to signal potential changes
-      newHash <- lift (hashlazy <$> LB.readFile path)
-      -- ^ Hash the file in question
-      deepseq newHash $ do
+      withHash path $ \newHash -> do
         table <- gets hashes
         case M.lookup path table of -- ^ lookup old hash
           Nothing -> go
@@ -77,14 +74,16 @@ watcherThread :: MVar FilePath
   -> (FilePath -> Bool) -- File filter
   -> Event
   -> IO ()
-watcherThread wMVar watch fileFilter = \case
-  Modified False mbPath ->
-    whenJust mbPath $ \path ->
-      when (fileFilter path) $ putMVar wMVar path
-  Created False path ->
-    when (fileFilter path) $ putMVar wMVar path
-  Ignored -> watch (watcherThread wMVar watch fileFilter)
-  _ -> pure ()
+watcherThread wMVar watch fileFilter = go
+  where
+    go = \case
+      Modified False mbPath ->
+        whenJust mbPath $ \path ->
+          when (fileFilter path) $ putMVar wMVar path
+      Created False path ->
+        when (fileFilter path) $ putMVar wMVar path
+      Ignored -> watch go
+      _ -> pure ()
 
 
 

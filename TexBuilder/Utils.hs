@@ -1,12 +1,29 @@
+{-# language PackageImports #-}
 module TexBuilder.Utils where
 
 import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.Extra
+import Control.Monad.Trans
+import Control.DeepSeq
 
 import System.INotify
 import System.Directory
 import System.FilePath
+
+import "cryptonite" Crypto.Hash
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString as B
+
+withHash :: (MonadIO io,HashAlgorithm a)
+  => FilePath -> (Digest a -> io b) -> io b
+withHash path k = do
+  hash <- liftIO (hashlazy <$> LB.readFile path)
+  deepseq hash $ k hash
+  -- ^ deepseq is neccessary to force reading to
+  --   actually happen here (we want to capture the
+  --   _current_ state of the file).
+
 
 isTexFile :: FilePath -> Bool
 isTexFile path = takeExtension path == ".tex"
