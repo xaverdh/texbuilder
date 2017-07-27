@@ -158,7 +158,7 @@ compile engine texfile pdffile extraArgs dir = do
       copyFile outFile pdffile
       pure $ PP.green $
         PP.text "Successful build from"
-        PP.<+> PP.text dir <> ","
+        PP.<+> PP.text dir <> PP.text ","
         PP.<+> PP.text "build time was"
         PP.<+> (PP.text . show $ finalT - initT)
         <> PP.hardline
