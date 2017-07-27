@@ -30,23 +30,14 @@ data CompileLoopState = CompileLoopState
 mkCLS = CompileLoopState M.empty
 
 
-compileThread :: FilePath -- ^ Path of the directory to watch
-  -> IO PP.Doc -- ^ The code compilation action
+compileThread :: IO PP.Doc -- ^ The code compilation action
   -> BinSem
   -- ^ Signaling semaphore to communicate when the
   --   pdf view should be updated.
-  -> (FilePath -> Bool) -- File filter
-  -> IO ()
-compileThread dir run sem fileFilter =
-  withWatches dir fileFilter $ \wMVar ->
-    compileThread' run sem wMVar
-
-
-compileThread' :: IO PP.Doc
-  -> BinSem
   -> MVar FilePath
+  -- ^ Communication MVar for signaling file changes
   -> IO ()
-compileThread' run viewSem wMVar =
+compileThread run viewSem wMVar =
   evalStateT compileLoop $ mkCLS wMVar
   where
     compileLoop = do

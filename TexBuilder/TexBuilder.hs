@@ -6,6 +6,7 @@ where
 
 import TexBuilder.Utils
 import TexBuilder.Engine
+import TexBuilder.Watches
 import TexBuilder.CompileThread
 import TexBuilder.ViewThread
 
@@ -43,7 +44,9 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
   -- ^ Do an initial compile run if appropriate
   sem <- newBinSem
   -- ^ Signaling semaphore connecting the threads
-  tid <- forkIO $ compileThread texDir run sem fileFilter
+  tid <- forkIO $
+    withWatches texDir fileFilter
+      ( compileThread run sem )
   -- ^ The thread which compiles the tex code
   onFileEx pdffile (mupdfView pdffile sem)
   -- ^ Enter the main thread which updates the pdf view
