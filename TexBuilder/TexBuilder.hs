@@ -119,6 +119,8 @@ withInitialHashes listSrc k = do
 copyRelative :: FilePath -> FilePath -> FilePath -> IO ()
 copyRelative dir1 dir2 file = do
   createDirectoryIfMissing True destDir
+  traceShowId file
+  traceShowId destFile
   copyFile file destFile
   where
     relFile = makeRelative dir1 file
@@ -141,7 +143,6 @@ withStatefulTmpDirSetup :: FilePath
   -> ( FilePath -> IO a ) -> IO a
 withStatefulTmpDirSetup tmpdir texDir listSrc k = do
   files <- listSrc
-  traceShow files $ pure ()
   forM_ files $ copyRelative texDir tmpdir
   k tmpdir
 
