@@ -10,6 +10,7 @@ import TexBuilder.Engine
 import TexBuilder.Watches
 import TexBuilder.CompileThread
 import TexBuilder.ViewThread
+import TexBuilder.FileFilters
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Control.Monad
@@ -32,13 +33,14 @@ data UseEngine = LuaLaTex | PdfLaTex
 data UseLatexMk = LatexMk | NoLatexMk
 
 texBuilder :: FilePath
-  -> Maybe FilePath 
+  -> Maybe FilePath
+  -> Exts
   -> UseEngine
   -> UseLatexMk
   -> Natural
   -> [String]
   -> IO ()
-texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
+texBuilder texfile mbf exts useEngine useLatexmk nrecomp extraArgs = do
   issueWarning
   -- ^ Issue warning if appropriate
   assertFileEx texfile
@@ -57,7 +59,7 @@ texBuilder texfile mbf useEngine useLatexmk nrecomp extraArgs = do
   putStrLn "mupdf exited, terminating"
   killThread tid
   where
-    fileFilter path = isTexFile path
+    fileFilter = extFilter exts
 
     texDir = takeDirectory texfile
     

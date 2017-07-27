@@ -1,6 +1,7 @@
 module Main where
 
 import TexBuilder.TexBuilder
+import TexBuilder.FileFilters
 
 import Data.Monoid
 
@@ -19,6 +20,8 @@ main = execParser parser >>= id
     opts = pure texBuilder
       <*> texOpt
       <*> optional pdfOpt
+      <*> fileTypesOpt
+      -- <*> watchOpt
       <*> noluaFlag
       <*> nolatexmkFlag
       <*> numCompOpt
@@ -33,9 +36,9 @@ texOpt = option str
   ( short 't' <> long "tex" <> metavar "TEXFILE"
   <> help "The main tex file to compile." )
 
--- | not yet ready
-fileTypesOpt = option str
+fileTypesOpt = option (maybeReader readExts)
   ( short 'f' <> long "file-types"
+  <> showDefaultWith showExts
   <> help "Watch for changes of all files in the directory,\
           \ with these file endings." )
 
