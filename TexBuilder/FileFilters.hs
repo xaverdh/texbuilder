@@ -1,5 +1,5 @@
 module TexBuilder.FileFilters
-  ( Exts
+  ( Exts(..)
   , showExts
   , readExts
   , extFilter )

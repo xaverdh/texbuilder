@@ -37,7 +37,7 @@ texOpt = option str
   <> help "The main tex file to compile." )
 
 fileTypesOpt = option (maybeReader readExts)
-  ( short 'f' <> long "file-types"
+  ( short 'f' <> long "file-types" <> value (Exts ["tex","bib"])
   <> showDefaultWith showExts
   <> help "Watch for changes of all files in the directory,\
           \ with these file endings." )
