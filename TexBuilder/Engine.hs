@@ -58,11 +58,9 @@ recompileSt :: IO (Either String FilePath)
 recompileSt run = get >>= \case
   StInitial maxNum -> go $ succ maxNum
   StSucc i path oldHash ->
-    if i <= 0
-      then done path
+    if i <= 0 then done path
       else go $ \path hash ->
-        if hash == oldHash
-          then done path
+        if hash == oldHash then done path
           else succ i path hash
   where
     go k = lift run >>= \case
