@@ -1,4 +1,3 @@
-{-# language PackageImports #-}
 module TexBuilder.TexBuilder
   ( texBuilder
   , StatePolicy(..)
@@ -23,13 +22,11 @@ import Data.Monoid
 import Data.Maybe
 import qualified Data.Map as M
 import Numeric.Natural
-import "cryptonite" Crypto.Hash
 
 import Options.Applicative
 import Options.Applicative.Builder
 import System.Directory
 import System.FilePath
-import System.Exit
 import System.IO.Temp
 import Control.Concurrent
 import Control.Concurrent.MVar
@@ -146,12 +143,5 @@ withModRunAction statePolicy texDir listSrc run k =
   where
     withTmp = withSystemTempDirectory "texbuilder"
     runIn wdir = withDirSetup wdir texDir listSrc run
-
-
-assertFileEx :: FilePath -> IO ()
-assertFileEx file =
-  unlessM (doesFileExist file) $ do
-    putStrLn (file <> " does not exist.")
-    exitFailure
 
 

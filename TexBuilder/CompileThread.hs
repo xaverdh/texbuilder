@@ -1,4 +1,3 @@
-{-# language PackageImports, LambdaCase #-}
 module TexBuilder.CompileThread
   ( compileThread )
 where
@@ -6,22 +5,14 @@ where
 import TexBuilder.Utils.BinSem
 import TexBuilder.Utils.Hashing
 import TexBuilder.Engine
-import TexBuilder.Watches
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
-
-import "cryptonite" Crypto.Hash
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString as B
 import qualified Data.Map as M
 
 import Control.Monad
 import Control.Monad.Extra
 import Control.Monad.State
 import Control.Concurrent.MVar
-
-import System.INotify
-import System.Directory
 
 
 

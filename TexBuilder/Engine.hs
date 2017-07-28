@@ -1,4 +1,4 @@
-{-# language LambdaCase, PackageImports, OverloadedStrings #-}
+{-# language LambdaCase, OverloadedStrings #-}
 module TexBuilder.Engine
   ( Engine(..)
   , compile
@@ -9,20 +9,15 @@ module TexBuilder.Engine
   , pdfLaTexMk )
 where
 
--- import TexBuilder.Utils
 import TexBuilder.Utils.Hashing
 
 import Data.Monoid
+-- import Data.Time.Clock.POSIX (getPOSIXTime)
 import Numeric.Natural
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString as B
-import "cryptonite" Crypto.Hash
-import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Text.PrettyPrint.ANSI.Leijen ((<+>))
-import Data.Time.Clock.POSIX
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
 
 import Control.Monad.State
-import Control.DeepSeq
 
 import System.Directory
 import System.FilePath
@@ -150,18 +145,18 @@ compile :: Engine
   -> FilePath
   -> IO PP.Doc
 compile engine texfile pdffile extraArgs dir = do
-  initT <- getPOSIXTime
+  initT <- epochTime
   engine dir texfile extraArgs >>= \case
     Left err -> pure $ PP.red $ PP.text err
     Right outFile -> do
-      finalT <- getPOSIXTime
+      finalT <- epochTime
       copyFile outFile pdffile
       pure $ PP.green $
         "Successful build from"
         <+> PP.text dir <> ","
         <+> "build time was"
         <+> (PP.text . show $ finalT - initT)
-        <> PP.hardline
+        <+> "s" <> PP.hardline
 
   
 

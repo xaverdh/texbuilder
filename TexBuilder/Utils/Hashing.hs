@@ -1,5 +1,9 @@
 {-# language PackageImports #-}
-module TexBuilder.Utils.Hashing where
+module TexBuilder.Utils.Hashing
+  ( withHash
+  , withHashes
+  , module Crypto.Hash )
+where
 
 import Control.Monad
 import Control.Monad.Trans

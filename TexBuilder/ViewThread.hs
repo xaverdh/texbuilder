@@ -2,6 +2,8 @@ module TexBuilder.ViewThread
   ( mupdfView )
 where
 
+import TexBuilder.Utils.BinSem
+
 import Data.Functor
 import Control.Monad
 import Control.Concurrent
@@ -10,7 +12,6 @@ import System.Posix.Signals
 import System.Process
 import System.Process.Internals
 
-import TexBuilder.Utils.BinSem
 
 
 mupdfView :: FilePath -- ^ The path of the file to view

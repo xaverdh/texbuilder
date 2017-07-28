@@ -5,8 +5,10 @@ import Control.Monad.Extra
 
 import System.Directory
 import System.FilePath
+import System.Exit
 
 import Numeric.Natural
+import Data.Monoid
 
 
 listDirAbsolute :: FilePath -> IO [FilePath]
@@ -40,6 +42,12 @@ copyRelative dir1 dir2 file = do
   let destDir = takeDirectory destFile
   createDirectoryIfMissing True destDir
   copyFile file destFile
+
+assertFileEx :: FilePath -> IO ()
+assertFileEx file =
+  unlessM (doesFileExist file) $ do
+    putStrLn (file <> " does not exist.")
+    exitFailure
 
 
 
