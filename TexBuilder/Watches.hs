@@ -1,6 +1,6 @@
 {-# language LambdaCase #-}
 module TexBuilder.Watches
-  ( withWatches )
+  ( setupWatches )
 where
 
 
@@ -15,40 +15,47 @@ import System.FilePath
 
 import Numeric.Natural
 
-
-withWatches :: Natural -- ^ Depth to descend into directories
+setupWatches :: Natural -- ^ Depth to descend into directories
   -> FilePath -- ^ Path of the directory to watch
   -> (FilePath -> Bool) -- ^ File filter
-  -> (MVar FilePath -> IO b) -- ^ Continuation
+  -> MVar FilePath
   -> IO b
-withWatches depth texDir fileFilter k =
+setupWatches depth texDir fileFilter watchMVar =
   withINotify $ \inotify -> do
-    wMVar <- newEmptyMVar
-    subdirs <- listSubdirs depth texDir
-    forM_ subdirs $ watch wMVar inotify
-    k wMVar
+    dirMVar <- newEmptyMVar
+    walkSubdirs (watch dirMVar inotify) depth texDir
+    loop dirMVar inotify
   where
-    watch mvar inotify dir = void $ addWatch inotify
-      [Modify,Create,Delete] dir
-      ( watcherThread dir mvar fileFilter )
+    watch mvar inotify depth dir = 
+      void $ addWatch inotify [Modify,Create,Delete] dir
+      ( watcherThread mvar depth dir watchMVar fileFilter )
+
+    loop dirMVar inotify = do
+      (dir,depth) <- takeMVar dirMVar
+      walkSubdirs (watch dirMVar inotify) depth texDir
+      loop dirMVar inotify
 
 
-watcherThread :: FilePath -- ^ Directory we are watching
-  -> MVar FilePath -- ^ Communication MVar
+
+watcherThread :: MVar (FilePath,Natural)
+  -- ^ Directory creation MVar
+  -> Natural -- ^ Depth
+  -> FilePath -- ^ Directory we are watching
+  -> MVar FilePath -- ^ Watch MVar
   -> (FilePath -> Bool) -- ^ File filter
   -> Event -- ^ Recieved event
   -> IO ()
-watcherThread dir wMVar fileFilter = \case
+watcherThread dirMVar depth dir watchMVar fileFilter = \case
   Modified False mbPath ->
     whenJust mbPath $ \path ->
       when (fileFilter path) $ post path
   Created False path ->
     when (fileFilter path) $ post path
+  Created True path ->
+    when (depth > 0) $ putMVar dirMVar (dir </> path,depth) 
   Ignored -> pure ()
-    -- ^ TODO: communicate this and other failures to main thread
-    --         via MVar FilePath => MVar (Either Err FilePath)
   _ -> pure ()
   where
-    post path = putMVar wMVar (dir </> path)
+    post path = putMVar watchMVar (dir </> path)
 
 

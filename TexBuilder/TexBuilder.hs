@@ -59,15 +59,18 @@ texBuilder
       -- ^ Do an initial compile run if appropriate
       sem <- newBinSem
       -- ^ Signaling semaphore connecting the threads
-      tid <- forkIO $ 
-        withInitialHashes listSrcFiles $ \hashes ->
-          withWatches depth texDir fileFilter $ \wMVar ->
-            compileThread run sem wMVar hashes
-      -- ^ The thread which compiles the tex code
-      onFileEx pdffile ( mupdfView pdffile sem )
-      -- ^ Enter the main thread which updates the pdf view
-      putStrLn "mupdf exited, terminating"
-      killThread tid
+      withInitialHashes listSrcFiles $ \hashes -> do
+        watchMVar <- newEmptyMVar
+        wtid <- forkIO $ 
+          setupWatches depth texDir fileFilter watchMVar
+        ctid <- forkIO $
+          compileThread run sem watchMVar hashes
+        -- ^ The thread which compiles the tex code
+        onFileEx pdffile ( mupdfView pdffile sem )
+        -- ^ Enter the main thread which updates the pdf view
+        putStrLn "mupdf exited, terminating"
+        killThread wtid
+        killThread ctid
   where
     fileFilter = extFilter exts
 

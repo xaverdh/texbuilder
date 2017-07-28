@@ -16,13 +16,21 @@ listDirAbsolute dir = do
   dir' <- makeAbsolute dir
   map (dir'</>) <$> listDirectory dir'
 
+
 listSubdirs :: Natural -> FilePath -> IO [FilePath]
-listSubdirs 0 dir = pure [dir]
-listSubdirs depth dir = do
+listSubdirs = walkSubdirs (const pure)
+
+
+walkSubdirs :: (Natural -> FilePath -> IO a)
+  -> Natural -> FilePath
+  -> IO [a]
+walkSubdirs f 0 dir = fmap pure $ f 0 dir
+walkSubdirs f depth dir = do
   paths <- listDirAbsolute dir
   dirs <- filterM doesDirectoryExist paths
-  subdirs <- forM dirs $ listSubdirs (depth-1)
-  pure $ dir : join subdirs
+  results <- forM dirs $ walkSubdirs f (depth-1)
+  (:join results) <$> f depth dir
+
 
 searchFilesWith :: (FilePath -> Bool) -> [FilePath] -> IO [FilePath]
 searchFilesWith f dirs = do
