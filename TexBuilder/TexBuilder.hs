@@ -6,7 +6,7 @@ module TexBuilder.TexBuilder
   , UseLatexMk(..) )
 where
 
-import TexBuilder.Utils
+import TexBuilder.Utils.File
 import TexBuilder.Utils.Inotify
 import TexBuilder.Utils.BinSem
 import TexBuilder.Utils.Hashing

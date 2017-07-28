@@ -1,15 +1,11 @@
-module TexBuilder.Utils where
+module TexBuilder.Utils.File where
 
-
-import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.Extra
-import Control.Monad.Trans
 
 import System.Directory
 import System.FilePath
 
-import Data.Monoid
 import Numeric.Natural
 
 

@@ -4,7 +4,7 @@ module TexBuilder.Watches
 where
 
 
-import TexBuilder.Utils
+import TexBuilder.Utils.File
 
 import Control.Monad
 import Control.Monad.Extra
