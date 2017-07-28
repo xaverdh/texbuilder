@@ -10,7 +10,7 @@ import System.Posix.Signals
 import System.Process
 import System.Process.Internals
 
-import TexBuilder.Utils
+import TexBuilder.Utils.BinSem
 
 
 mupdfView :: FilePath -- ^ The path of the file to view

@@ -3,7 +3,8 @@ module TexBuilder.CompileThread
   ( compileThread )
 where
 
-import TexBuilder.Utils
+import TexBuilder.Utils.BinSem
+import TexBuilder.Utils.Hashing
 import TexBuilder.Engine
 import TexBuilder.Watches
 

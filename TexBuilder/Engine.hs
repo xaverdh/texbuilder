@@ -9,7 +9,8 @@ module TexBuilder.Engine
   , pdfLaTexMk )
 where
 
-import TexBuilder.Utils
+-- import TexBuilder.Utils
+import TexBuilder.Utils.Hashing
 
 import Data.Monoid
 import Numeric.Natural

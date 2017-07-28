@@ -7,6 +7,8 @@ module TexBuilder.TexBuilder
 where
 
 import TexBuilder.Utils
+import TexBuilder.Utils.BinSem
+import TexBuilder.Utils.Hashing
 import TexBuilder.Engine
 import TexBuilder.Watches
 import TexBuilder.CompileThread
