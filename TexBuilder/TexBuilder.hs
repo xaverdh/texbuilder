@@ -18,6 +18,7 @@ import TexBuilder.FileFilters
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Control.Monad
 import Control.Monad.Extra
+-- import Data.Semigroup
 import Data.Monoid
 import Data.Maybe
 import qualified Data.Map as M

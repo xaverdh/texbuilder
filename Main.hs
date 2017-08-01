@@ -3,7 +3,7 @@ module Main where
 import TexBuilder.TexBuilder
 import TexBuilder.FileFilters
 
-import Data.Monoid
+import Data.Semigroup hiding (option)
 
 import Options.Applicative
 import Options.Applicative.Builder

@@ -11,8 +11,9 @@ where
 
 import TexBuilder.Utils.Hashing
 
+-- import Data.Semigroup
 import Data.Monoid
--- import Data.Time.Clock.POSIX (getPOSIXTime)
+
 import Numeric.Natural
 import Text.PrettyPrint.ANSI.Leijen ((<+>))
 import qualified Text.PrettyPrint.ANSI.Leijen as PP

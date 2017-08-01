@@ -8,7 +8,7 @@ import System.FilePath
 import System.Exit
 
 import Numeric.Natural
-import Data.Monoid
+import Data.Semigroup
 
 
 listDirAbsolute :: FilePath -> IO [FilePath]
