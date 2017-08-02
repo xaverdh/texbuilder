@@ -52,8 +52,6 @@ texBuilder
   useEngine useLatexmk nrecomp extraArgs =
   withModRunAction statePolicy texDir listSrcFiles runRaw
     $ \run -> do
-      issueWarning
-      -- ^ Issue warning if appropriate
       assertFileEx texfile
       -- ^ Assert that the tex file exists
       initialCompile pdffile run
@@ -88,16 +86,6 @@ texBuilder
       (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
       (PdfLaTex,LatexMk) -> pdfLaTexMk
       (PdfLaTex,NoLatexMk) -> recompile nrecomp pdfLaTex
-    
-    issueWarning = case (useEngine,useLatexmk) of
-      (LuaLaTex,NoLatexMk) -> PP.putDoc warning
-      _ -> pure ()
-    
-    warning = PP.yellow $ PP.text
-        "Note that lualatex does not currently respect \
-        \SOURCE_DATE_EPOCH, so the source will often be \
-        \rebuild the maximum number of times, slowing \
-        \things down." <> PP.hardline
 
 
 initialCompile :: FilePath -> IO PP.Doc -> IO () 
