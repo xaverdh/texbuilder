@@ -4,6 +4,7 @@ import TexBuilder.TexBuilder
 import TexBuilder.FileFilters
 
 import Data.Semigroup hiding (option)
+import Numeric.Natural
 
 import Options.Applicative
 import Options.Applicative.Builder
@@ -29,32 +30,39 @@ main = execParser parser >>= id
       <*> numCompOpt
       <*> extraArgs
 
+pdfOpt :: Parser FilePath
 pdfOpt = option str
   ( short 'p' <> long "pdf" <> metavar "PDFFILE"
   <> help "The name of the pdf file to write to \
   \ (defaults to TEXFILE with file ending adjusted)." )
 
+texOpt :: Parser FilePath
 texOpt = option str
   ( short 't' <> long "tex" <> metavar "TEXFILE"
   <> help "The main tex file to compile." )
 
+fileTypesOpt :: Parser Exts
 fileTypesOpt = option (maybeReader readExts)
   ( short 'f' <> long "file-types" <> value (Exts ["tex","bib"])
   <> showDefaultWith showExts <> metavar "EXTENSIONS"
   <> help "Watch for changes of all files in the directory,\
           \ with these file endings." )
 
+depthOpt :: Parser Natural
 depthOpt = option auto
   ( short 'd' <> long "depth" <> value 3
   <> showDefault <> metavar "DEPTH"
   <> help "The depth to descend into directories." )
 
+statefulFlag :: Parser StatePolicy
 statefulFlag = flag' Stateful
   ( long "stateful"
   <> help "Run in stateful mode, reusing results from\
           \ previous compile runs. This improves efficiency\
           \ but may lead to artifacts in some situations.")
 
+
+persistFlag :: Parser StatePolicy
 persistFlag = flag' Persistent
   ( long "persistent"
   <> help "Run in persistent mode, using the main directory\
@@ -62,18 +70,22 @@ persistFlag = flag' Persistent
           \ will have to fix it.")
 
 -- | not yet ready
+watchOpt :: Parser String
 watchOpt = option str
   ( short 'w' <> long "watch"
   <> help "Watch for changes of these files ONLY." )
 
+noluaFlag :: Parser UseEngine
 noluaFlag = flag LuaLaTex PdfLaTex
   ( long "noluatex"
-  <> help "Do not user luaLaTex / use old pdfLaTex instead." )
+  <> help "Do not user luaLaTex / use pdfLaTex instead." )
 
+nolatexmkFlag :: Parser UseLatexMk
 nolatexmkFlag = flag LatexMk NoLatexMk
   ( long "nolatexmk"
   <> help "Do not go through latexmk, use engine directly." )
 
+numCompOpt :: Parser Natural
 numCompOpt = option auto
   ( short 'r' <> long "recompile" <> metavar "NRECOMP" <> value 5
   <> help "The maximum number of times we should attempt to \
@@ -81,6 +93,7 @@ numCompOpt = option auto
           \when using luaLaTex / pdfLaTex directly."
   <> showDefault )
 
+extraArgs :: Parser [String]
 extraArgs = many $ strArgument
   ( metavar "EXTRA_ARGS"
   <> help "Extra arguments to pass to the latex engine." )
