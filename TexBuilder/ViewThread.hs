@@ -35,8 +35,8 @@ signalThread pid sem = do
 getPid :: ProcessHandle -> IO (Maybe CPid)
 getPid = flip withProcessHandle $ \ph_ ->
   case ph_ of
-    OpenHandle x   -> return $ Just x
-    ClosedHandle _ -> return Nothing
+    OpenHandle x   -> pure $ Just x
+    ClosedHandle _ -> pure Nothing
 
 
 

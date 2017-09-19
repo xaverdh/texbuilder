@@ -25,7 +25,7 @@ readExts s = Just $ Exts parts
     splitter = do
       (s,r) <- get
       case L.break (==',') s of
-        (a,_:b) -> put (b,a:r) >> splitter
+        (a,_:b) -> put (b,a:r) *> splitter
         (a,[]) -> pure (a:r)  
 
 extFilter :: Exts -> FilePath -> Bool

@@ -83,7 +83,7 @@ onFileEx file action =
   unlessM
     (doesFileExist file)
     (waitForFile file)
-  >> action
+  *> action
 
 
 
