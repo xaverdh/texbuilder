@@ -13,6 +13,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Extra
 import System.Exit
+import Data.Monoid
 
 
 data UseEngine = UseLuaLaTex | UsePdfLaTex
@@ -28,8 +29,13 @@ chooseEngine useEngine useLatexmk =
     (UsePdfLaTex,UseLatexMk) -> usePdfMk True
     (UsePdfLaTex,UseNoLatexMk) -> usePdf True
 
+haveLua :: IO Bool
 haveLua = haveExe "lualatex"
+
+havePdf :: IO Bool
 havePdf = haveExe "pdflatex"
+
+haveMk :: IO Bool
 haveMk = haveExe "latexmk"
 
 errorNoEngine = do
@@ -37,7 +43,9 @@ errorNoEngine = do
     $ PP.string "No latex engine found!"
   exitWith $ ExitFailure 2
 
-warn = PP.putDoc . PP.yellow . PP.string
+warn :: String -> IO ()
+warn s = PP.putDoc . PP.yellow
+  $ PP.string s <> PP.hardline
 
 
 useLuaMk :: Bool -> IO Engine
