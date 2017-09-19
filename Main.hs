@@ -66,7 +66,7 @@ persistFlag :: Parser StatePolicy
 persistFlag = flag' Persistent
   ( long "persistent"
   <> help "Run in persistent mode, using the main directory\
-          \ for building. If the state gets messed up, you\
+          \ for building. If the state gets messed up, YOU\
           \ will have to fix it.")
 
 -- | not yet ready
@@ -103,9 +103,9 @@ hdr = "texbuilder: view your latex output pdf while editing"
 description =
   "This program allows you to view your document \
   \in mupdf while editing it in your favorite editor. \
-  \When you save your document it will recompile it \
-  \in a fresh environment, overwrite the output pdf \
-  \file and send a signal to mupdf to reload the file. \
+  \When you save your document it will recompile it, \
+  \overwrite the output pdf file and send a signal \
+  \to your pdf reader to reload the file. \
   \This effectively allows for a \"continous preview\"-like \
   \experience."
 
