@@ -103,7 +103,7 @@ hdr = "texbuilder: view your latex output pdf while editing"
 description =
   "This program allows you to view your document \
   \in your pdf viewer while editing it in your favorite editor. \
-  \When you save your document it will recompile it, \
+  \When you save your document, it will recompile it, \
   \overwrite the output pdf file and send a signal \
   \to your pdf reader to reload the file. \
   \This effectively allows for a \"continous preview\"-like \
