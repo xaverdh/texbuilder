@@ -39,7 +39,7 @@ haveMk :: IO Bool
 haveMk = haveExe "latexmk"
 
 errorNoEngine = do
-  PP.putDoc . PP.yellow
+  PP.putDoc . PP.red
     $ PP.string "No latex engine found!"
   exitWith $ ExitFailure 2
 
