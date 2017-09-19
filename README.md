@@ -35,10 +35,10 @@ By default texbuilder will use a fresh environment for every compile run. This m
 sound wasteful, but is quite feasible with average sized tex files on modern harware.
 And it does avoid problems with messed up state, when something goes wrong.
 
-Still if you do have problems with performance, use the ```sh --stateful ``` flag.
+Still if you do have problems with performance, use the ` --stateful ` flag.
 
 Finally if you really really need all those intermediate representation files
-in your directory, use ```sh --persistent ```.
+in your directory, use ` --persistent `.
 
 
 [build-script]: https://gitlab.com/xaverdh/tex-builder/blob/master/build
