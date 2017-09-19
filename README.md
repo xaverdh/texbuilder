@@ -1,15 +1,15 @@
 # texbuilder
 ## What it is
 
-This program allows you to view your document in your pdf reader
-while editing it in your favorite editor. When you save your document
-it will recompile it, overwrite the output pdf file and send
-a signal to your pdf reader to reload the file.
+This program allows you to view your latex document in your pdf
+reader while editing it in your favorite editor. When you save
+your document, it will recompile it, overwrite the output pdf file
+and send a signal to your pdf reader to reload the file.
 This effectively allows for a "continous preview"-like experience.
 
 ## Prerequisites and Dependencies
-  * linux (we use inotify extensively)
-  * A recent cabal / ghc
+  * linux (we use inotify)
+  * a recent cabal / ghc
   * (currently only works with) mupdf
   * working latex with either lualatex or pdflatex
 
