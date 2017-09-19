@@ -102,7 +102,7 @@ hdr = "texbuilder: view your latex output pdf while editing"
 
 description =
   "This program allows you to view your document \
-  \in mupdf while editing it in your favorite editor. \
+  \in your pdf viewer while editing it in your favorite editor. \
   \When you save your document it will recompile it, \
   \overwrite the output pdf file and send a signal \
   \to your pdf reader to reload the file. \
