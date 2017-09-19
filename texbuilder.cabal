@@ -20,6 +20,7 @@ executable texbuilder
   
   other-modules:       TexBuilder.CompileThread
   other-modules:       TexBuilder.Engine                            
+  other-modules:       TexBuilder.ChooseEngine 
   other-modules:       TexBuilder.FileFilters
   other-modules:       TexBuilder.TexBuilder                        
   other-modules:       TexBuilder.Utils.BinSem

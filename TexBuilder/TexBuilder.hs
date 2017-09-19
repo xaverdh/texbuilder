@@ -10,12 +10,14 @@ import TexBuilder.Utils.Inotify
 import TexBuilder.Utils.BinSem
 import TexBuilder.Utils.Hashing
 import TexBuilder.Engine
+import TexBuilder.ChooseEngine
 import TexBuilder.Watches
 import TexBuilder.CompileThread
 import TexBuilder.ViewThread
 import TexBuilder.FileFilters
 
 import qualified Text.PrettyPrint.ANSI.Leijen as PP
+import Control.Applicative
 import Control.Monad
 import Control.Monad.Extra
 -- import Data.Semigroup
@@ -33,8 +35,6 @@ import Control.Concurrent
 import Control.Concurrent.MVar
 
 
-data UseEngine = LuaLaTex | PdfLaTex
-data UseLatexMk = LatexMk | NoLatexMk
 data StatePolicy = Pure | Stateful | Persistent
 
 texBuilder :: FilePath
@@ -49,7 +49,10 @@ texBuilder :: FilePath
   -> IO ()
 texBuilder 
   texfile mbPdfFile exts depth statePolicy
-  useEngine useLatexmk nrecomp extraArgs =
+  useEngine useLatexmk nrecomp extraArgs
+  = do
+  engine <- chooseEngine useEngine useLatexmk
+  let runRaw = compile engine nrecomp texfile pdffile extraArgs
   withModRunAction statePolicy texDir listSrcFiles runRaw
     $ \run -> do
       assertFileEx texfile
@@ -77,15 +80,7 @@ texBuilder
     
     listSrcFiles = listSourceFiles depth texDir fileFilter
     
-    runRaw = compile engine texfile pdffile extraArgs
-
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
-
-    engine = case (useEngine,useLatexmk) of
-      (LuaLaTex,LatexMk) -> luaLaTexMk
-      (LuaLaTex,NoLatexMk) -> recompile nrecomp luaLaTex
-      (PdfLaTex,LatexMk) -> pdfLaTexMk
-      (PdfLaTex,NoLatexMk) -> recompile nrecomp pdfLaTex
 
 
 initialCompile :: FilePath -> IO PP.Doc -> IO () 

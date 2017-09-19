@@ -10,6 +10,7 @@ module TexBuilder.Engine
 where
 
 import TexBuilder.Utils.Hashing
+import TexBuilder.Utils.File
 
 -- import Data.Semigroup
 import Data.Monoid
@@ -27,7 +28,20 @@ import System.Exit
 import System.Environment (setEnv)
 import System.Posix.Time (epochTime)
 
-type Engine =
+data Engine =
+  LuaLaTexMk
+  | LuaLaTex
+  | PdfLaTexMk
+  | PdfLaTex
+  
+runEngine :: Natural -> Engine -> EngineImpl
+runEngine nrecomp = \case
+  LuaLaTexMk -> luaLaTexMk
+  LuaLaTex -> recompile nrecomp luaLaTex
+  PdfLaTexMk -> pdfLaTexMk
+  PdfLaTex -> recompile nrecomp pdfLaTex
+
+type EngineImpl =
   FilePath -> FilePath -> [String] -> IO (Either String FilePath)
 
 data RecompileState =
@@ -39,7 +53,7 @@ data RecompileState =
 --   or maxNum compile runs is reached.
 --   Care must be taken to make the latex output reproductible.
 --   Otherwise the output will never stablilize.
-recompile :: Natural -> Engine -> Engine
+recompile :: Natural -> EngineImpl -> EngineImpl
 recompile maxNum engine outDir texfile extraArgs = do
   time <- show <$> epochTime
   evalStateT (recompileSt (run time)) (StInitial maxNum)
@@ -72,7 +86,7 @@ recompileSt run = get >>= \case
     failed = pure . Left
 
 
-luaLaTex :: Engine
+luaLaTex :: EngineImpl
 luaLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
     "/usr/bin/lualatex" args ""
@@ -89,7 +103,7 @@ luaLaTex outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
-pdfLaTex :: Engine
+pdfLaTex :: EngineImpl
 pdfLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
     "/usr/bin/pdflatex" args ""
@@ -106,7 +120,7 @@ pdfLaTex outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
-luaLaTexMk :: Engine
+luaLaTexMk :: EngineImpl
 luaLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
     "/usr/bin/latexmk" args ""
@@ -121,7 +135,7 @@ luaLaTexMk outDir texfile extraArgs = do
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
 
-pdfLaTexMk :: Engine
+pdfLaTexMk :: EngineImpl
 pdfLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
     "/usr/bin/latexmk" args ""
@@ -140,14 +154,15 @@ pdfLaTexMk outDir texfile extraArgs = do
 --   write the output to given path. Returns human readable
 --   information about the build success / failure.
 compile :: Engine
+  -> Natural
   -> FilePath
   -> FilePath
   -> [String]
   -> FilePath
   -> IO PP.Doc
-compile engine texfile pdffile extraArgs dir = do
+compile engine nrecomp texfile pdffile extraArgs dir = do
   initT <- epochTime
-  engine dir texfile extraArgs >>= \case
+  runEngine nrecomp engine dir texfile extraArgs >>= \case
     Left err -> pure $ PP.red $ PP.text err
     Right outFile -> do
       finalT <- epochTime

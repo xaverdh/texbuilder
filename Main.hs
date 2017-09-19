@@ -76,12 +76,12 @@ watchOpt = option str
   <> help "Watch for changes of these files ONLY." )
 
 noluaFlag :: Parser UseEngine
-noluaFlag = flag LuaLaTex PdfLaTex
+noluaFlag = flag UseLuaLaTex UsePdfLaTex
   ( long "noluatex"
   <> help "Do not user luaLaTex / use pdfLaTex instead." )
 
 nolatexmkFlag :: Parser UseLatexMk
-nolatexmkFlag = flag LatexMk NoLatexMk
+nolatexmkFlag = flag UseLatexMk UseNoLatexMk
   ( long "nolatexmk"
   <> help "Do not go through latexmk, use engine directly." )
 
