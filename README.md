@@ -1,8 +1,8 @@
 # texbuilder
 ## What it is
 
-This program allows you to view your document in mupdf while
-editing it in your favorite editor. When you save your document
+This program allows you to view your document in your pdf reader
+while editing it in your favorite editor. When you save your document
 it will recompile it, overwrite the output pdf file and send
 a signal to your pdf reader to reload the file.
 This effectively allows for a "continous preview"-like experience.
@@ -21,7 +21,7 @@ cd tex-builder
 cabal sandbox init
 cabal install --bindir . --ghc-option=-threaded
 ```
-Alternatively you can user the provided [build script][build-script].
+Alternatively you can use the provided [build script][build-script].
 So assuming you have wget you cound do:
 wget -O - https://gitlab.com/xaverdh/tex-builder/raw/master/build | sh
 
