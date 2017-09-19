@@ -23,7 +23,10 @@ cabal install --bindir . --ghc-option=-threaded
 ```
 Alternatively you can use the provided [build script][build-script].
 So assuming you have wget you cound do:
+
+```sh
 wget -O - https://gitlab.com/xaverdh/tex-builder/raw/master/build | sh
+```
 
 ## Usage
 
