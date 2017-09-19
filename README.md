@@ -43,6 +43,15 @@ Still if you do have problems with performance, use the ` --stateful ` flag.
 Finally if you really really need all those intermediate representation files
 in your directory, use ` --persistent `.
 
+## Legal
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
+
+See LICENSE for more details.
+
 
 [build-script]: https://gitlab.com/xaverdh/tex-builder/blob/master/build
 
