@@ -1,4 +1,4 @@
-{-# language LambdaCase #-}
+{-# LANGUAGE LambdaCase #-}
 module TexBuilder.Watches
   ( setupWatches )
 where

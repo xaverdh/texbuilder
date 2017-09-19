@@ -1,4 +1,4 @@
-{-# language PackageImports #-}
+{-# LANGUAGE PackageImports #-}
 module TexBuilder.Utils.Hashing
   ( withHash
   , withHashes

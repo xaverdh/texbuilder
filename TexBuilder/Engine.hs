@@ -1,4 +1,4 @@
-{-# language LambdaCase, OverloadedStrings #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings #-}
 module TexBuilder.Engine
   ( Engine(..)
   , compile
