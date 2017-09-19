@@ -9,6 +9,7 @@ import System.Exit
 
 import Numeric.Natural
 import Data.Semigroup
+import Data.Maybe
 
 
 listDirAbsolute :: FilePath -> IO [FilePath]
@@ -57,5 +58,7 @@ assertFileEx file =
     putStrLn (file <> " does not exist.")
     exitFailure
 
+haveExe :: String -> IO Bool
+haveExe name = isJust <$> findExecutable name
 
 
