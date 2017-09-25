@@ -99,7 +99,7 @@ numCompOpt = option auto
   ( short 'r' <> long "recompile" <> metavar "NRECOMP" <> value 5
   <> help "The maximum number of times we should attempt to \
           \recompile the document unil it becomes stable \
-          \when using luaLaTex / pdfLaTex directly."
+          \when using the latex engine directly."
   <> showDefault )
 
 extraArgs :: Parser [String]
@@ -107,7 +107,7 @@ extraArgs = many $ strArgument
   ( metavar "EXTRA_ARGS"
   <> help "Extra arguments to pass to the latex engine." )
 
-hdr = "texbuilder: view your latex output pdf while editing"
+hdr = "texbuilder: view your latex output while editing"
 
 engineHelp = "Use this latex engine, can be one of ["
   <> intercalate "|" ( showUseEngine <$> [minBound..maxBound] )
