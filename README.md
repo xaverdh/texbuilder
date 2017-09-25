@@ -11,9 +11,9 @@ This effectively allows for a "continous preview"-like experience.
   * linux (we use inotify)
   * a recent cabal / ghc
   * (currently only works with) mupdf
-  * working latex with either lualatex or pdflatex
+  * working latex with lualatex, xelatex or pdflatex and ideally latexmk
 
-## How to build
+## How to build from git
 
 ```sh
 git clone https://gitlab.com/xaverdh/tex-builder
