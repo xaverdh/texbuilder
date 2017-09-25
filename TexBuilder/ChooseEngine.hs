@@ -28,8 +28,8 @@ data UseEngine =
 readUseEngine :: String -> Maybe UseEngine
 readUseEngine s
   | s == "lualatex" = Just UseLuaLaTex
-  | s == "xelatex"  = Just UsePdfLaTex
-  | s == "pdflatex" = Just UseXeLaTex
+  | s == "xelatex"  = Just UseXeLaTex
+  | s == "pdflatex" = Just UsePdfLaTex
   | otherwise  = Nothing
 
 showUseEngine :: UseEngine -> String
