@@ -2,6 +2,7 @@ module Main where
 
 import TexBuilder.TexBuilder
 import TexBuilder.FileFilters
+import TexBuilder.ChooseEngine
 
 import Data.Semigroup hiding (option)
 import Numeric.Natural
@@ -25,7 +26,7 @@ main = execParser parser >>= id
       <*> depthOpt
       <*> (statefulFlag <|> persistFlag <|> pure Pure)
       -- <*> watchOpt
-      <*> noluaFlag
+      <*> engineOption
       <*> nolatexmkFlag
       <*> numCompOpt
       <*> extraArgs
@@ -74,6 +75,13 @@ watchOpt :: Parser String
 watchOpt = option str
   ( short 'w' <> long "watch"
   <> help "Watch for changes of these files ONLY." )
+
+engineOption :: Parser UseEngine
+engineOption = option (maybeReader readUseEngine)
+  ( short 'e' <> long "engine"
+  <> value UseLuaLaTex
+  <> showDefaultWith showUseEngine
+  <> help "Use this latex engine." )
 
 noluaFlag :: Parser UseEngine
 noluaFlag = flag UseLuaLaTex UsePdfLaTex

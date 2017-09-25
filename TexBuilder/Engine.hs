@@ -33,13 +33,17 @@ data Engine =
   | LuaLaTex
   | PdfLaTexMk
   | PdfLaTex
-  
+  | XeLaTexMk
+  | XeLaTex
+
 runEngine :: Natural -> Engine -> EngineImpl
 runEngine nrecomp = \case
   LuaLaTexMk -> luaLaTexMk
   LuaLaTex -> recompile nrecomp luaLaTex
   PdfLaTexMk -> pdfLaTexMk
   PdfLaTex -> recompile nrecomp pdfLaTex
+  XeLaTexMk -> xeLaTex
+  XeLaTex -> recompile nrecomp xeLaTex
 
 type EngineImpl =
   FilePath -> FilePath -> [String] -> IO (Either String FilePath)
@@ -119,6 +123,41 @@ pdfLaTex outDir texfile extraArgs = do
         , "--file-line-error" ]
         ++ extraArgs ++ [ texfile ]
     jobname = "texbuilder-job"
+
+xeLaTex :: EngineImpl
+xeLaTex outDir texfile extraArgs = do
+  (exCode,out,err) <- readProcessWithExitCode
+    "/usr/bin/xelatex" args ""
+  pure $ case exCode of
+    ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
+    ExitFailure _ -> Left out
+  where
+    args =
+        [ "--interaction=scrollmode"
+        , "--output-directory=" <> outDir
+        , "--jobname=" <> jobname
+        , "--output-format=pdf"
+        , "--file-line-error" ]
+        ++ extraArgs ++ [ texfile ]
+    jobname = "texbuilder-job"
+
+
+xeLaTexMk :: EngineImpl
+xeLaTexMk outDir texfile extraArgs = do
+  (exCode,out,err) <- readProcessWithExitCode
+    "/usr/bin/latexmk" args ""
+  pure $ case exCode of
+    ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
+    ExitFailure _ -> Left out
+  where
+    args =
+        [ "-xelatex"
+        , "-output-directory=" <> outDir
+        , "-jobname=" <> jobname ]
+        ++ extraArgs ++ [ texfile ]
+    jobname = "texbuilder-job"
+
+
 
 luaLaTexMk :: EngineImpl
 luaLaTexMk outDir texfile extraArgs = do

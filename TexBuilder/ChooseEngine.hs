@@ -1,6 +1,8 @@
 {-# LANGUAGE LambdaCase #-}
 module TexBuilder.ChooseEngine
   ( chooseEngine
+  , readUseEngine
+  , showUseEngine
   , UseEngine(..)
   , UseLatexMk(..) )
 where
@@ -16,7 +18,23 @@ import System.Exit
 import Data.Monoid
 
 
-data UseEngine = UseLuaLaTex | UsePdfLaTex
+
+data UseEngine = 
+  UseLuaLaTex
+  | UsePdfLaTex
+  | UseXeLaTex
+  deriving (Enum,Bounded)
+
+readUseEngine :: String -> Maybe UseEngine
+readUseEngine s
+  | s == "lualatex" = Just UseLuaLaTex
+  | s == "xelatex"  = Just UsePdfLaTex
+  | s == "pdflatex" = Just UseXeLaTex
+  | otherwise  = Nothing
+
+showUseEngine :: UseEngine -> String
+showUseEngine = enginePath
+
 data UseLatexMk = UseLatexMk | UseNoLatexMk
 
 
@@ -29,57 +47,61 @@ chooseEngine useEngine useLatexmk = do
     (UseLuaLaTex,UseNoLatexMk) -> LuaLaTex
     (UsePdfLaTex,UseLatexMk) -> PdfLaTexMk
     (UsePdfLaTex,UseNoLatexMk) -> PdfLaTex
+    (UseXeLaTex,UseLatexMk) -> XeLaTexMk
+    (UseXeLaTex,UseNoLatexMk) -> XeLaTex
 
 
 chooseLatexEngine :: UseEngine -> IO UseEngine
-chooseLatexEngine = \case
-  UseLuaLaTex -> useLua True
-  UsePdfLaTex -> usePdf True
+chooseLatexEngine = fallback . \case
+  UseLuaLaTex -> UseLuaLaTex : [UsePdfLaTex,UseXeLaTex]
+  UsePdfLaTex -> UsePdfLaTex : [UseXeLaTex,UseLuaLaTex]
+  UseXeLaTex -> UseXeLaTex : [UsePdfLaTex,UseLuaLaTex]
+  where
+    numEngines = fromEnum ( maxBound :: UseEngine )
 
 chooseLatexMk :: UseLatexMk -> IO UseLatexMk
 chooseLatexMk = \case
   UseLatexMk -> useMk
   UseNoLatexMk -> pure UseNoLatexMk
 
-
-haveLua :: IO Bool
-haveLua = haveExe "lualatex"
-
-havePdf :: IO Bool
-havePdf = haveExe "pdflatex"
-
 haveMk :: IO Bool
 haveMk = haveExe "latexmk"
-
-errorNoEngine = do
-  PP.putDoc . PP.red
-    $ PP.string "No latex engine found!"
-  exitWith $ ExitFailure 2
-
-warn :: String -> IO ()
-warn s = PP.putDoc . PP.yellow
-  $ PP.string s <> PP.hardline
-
 
 useMk :: IO UseLatexMk
 useMk = ifM haveMk (pure UseLatexMk) $ do
   warn "No latexmk in PATH, using engine directly."
   pure UseNoLatexMk
 
-useLua :: Bool -> IO UseEngine
-useLua rec = ifM haveLua (pure UseLuaLaTex) $ do
-  warn "No lualatex in PATH."
-  if rec then
-    warn  "Falling back to pdflatex."
-    *> usePdf False
-    else errorNoEngine
 
-usePdf :: Bool -> IO UseEngine
-usePdf rec = ifM havePdf (pure UsePdfLaTex) $ do
-  warn "No pdflatex in PATH."
-  if rec then
-    warn "Trying lualatex instead."
-    *> useLua False
-    else errorNoEngine
+enginePath :: UseEngine -> FilePath
+enginePath = \case
+  UseLuaLaTex -> "lualatex"
+  UsePdfLaTex -> "pdflatex"
+  UseXeLaTex -> "xelatex"
+
+haveEngine :: UseEngine -> IO Bool
+haveEngine = haveExe . enginePath
+
+fallback :: [UseEngine] -> IO UseEngine
+fallback = \case
+  [] -> errorNoEngine
+  useEng:useEngines ->
+    ifM (haveEngine useEng) (pure useEng) $ do
+      warn (enginePath useEng <> " not in PATH.")
+      warnFallback useEngines
+      fallback useEngines
+  where
+    warnFallback [] = pure ()
+    warnFallback (useEng:_) = 
+      warn ("Falling back to " <> enginePath useEng <> ".")
+
+warn :: String -> IO ()
+warn s = PP.putDoc . PP.yellow
+  $ PP.string s <> PP.hardline
+
+errorNoEngine = do
+  PP.putDoc . PP.red
+    $ PP.string "No latex engine found!"
+  exitWith $ ExitFailure 2
 
 
