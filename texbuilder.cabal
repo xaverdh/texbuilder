@@ -3,14 +3,20 @@
 
 name:                texbuilder
 version:             0.1.0.0
-synopsis:            view your latex output pdf while editing
--- description:         
+synopsis:            View your latex output while editing
+description:         
+  This program allows you to view your document in your pdf viewer while editing
+  it in your favorite editor. When you save your document, it will recompile it,
+  overwrite the output pdf file and send a signal to your pdf reader to reload
+  the file. This effectively allows for a "continous preview"-like experience.
+  This will run on Linux only at the moment.
+homepage:            https://gitlab.com/xaverdh/tex-builder#texbuilder
 license:             GPL-3
 license-file:        LICENSE
 author:              Dominik Xaver Hörl
-maintainer:           
+maintainer:          Dominik Xaver Hörl
 -- copyright:           
--- category:            
+category:            LaTeX
 build-type:          Simple
 extra-source-files:  ChangeLog.md, README.md
 cabal-version:       >=1.10
@@ -49,8 +55,13 @@ executable texbuilder
   build-depends:       deepseq              >= 1.4.2 && < 1.5
   build-depends:       ansi-wl-pprint       >= 0.6.7 && < 0.7
   build-depends:       extra                >= 1.5.3 && < 1.7
-  build-depends:       time                 >= 1.6.0 && < 1.9
   
   -- hs-source-dirs:      
   
   default-language:    Haskell2010
+
+source-repository head
+  type: git
+  location: https://gitlab.com/xaverdh/tex-builder/
+
+
