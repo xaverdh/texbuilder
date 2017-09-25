@@ -5,6 +5,7 @@ import TexBuilder.FileFilters
 import TexBuilder.ChooseEngine
 
 import Data.Semigroup hiding (option)
+import Data.List (intercalate)
 import Numeric.Natural
 
 import Options.Applicative
@@ -78,10 +79,10 @@ watchOpt = option str
 
 engineOption :: Parser UseEngine
 engineOption = option (maybeReader readUseEngine)
-  ( short 'e' <> long "engine"
+  ( short 'e' <> long "engine" <> metavar "ENGINE"
   <> value UseLuaLaTex
   <> showDefaultWith showUseEngine
-  <> help "Use this latex engine." )
+  <> help engineHelp )
 
 noluaFlag :: Parser UseEngine
 noluaFlag = flag UseLuaLaTex UsePdfLaTex
@@ -107,6 +108,10 @@ extraArgs = many $ strArgument
   <> help "Extra arguments to pass to the latex engine." )
 
 hdr = "texbuilder: view your latex output pdf while editing"
+
+engineHelp = "Use this latex engine, can be one of ["
+  <> intercalate "|" ( showUseEngine <$> [minBound..maxBound] )
+  <> "]."
 
 description =
   "This program allows you to view your document \
