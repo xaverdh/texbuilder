@@ -57,8 +57,6 @@ chooseLatexEngine = fallback . \case
   UseLuaLaTex -> UseLuaLaTex : [UsePdfLaTex,UseXeLaTex]
   UsePdfLaTex -> UsePdfLaTex : [UseXeLaTex,UseLuaLaTex]
   UseXeLaTex -> UseXeLaTex : [UsePdfLaTex,UseLuaLaTex]
-  where
-    numEngines = fromEnum ( maxBound :: UseEngine )
 
 chooseLatexMk :: UseLatexMk -> IO UseLatexMk
 chooseLatexMk = \case
