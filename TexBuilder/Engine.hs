@@ -42,7 +42,7 @@ runEngine nrecomp = \case
   LuaLaTex -> recompile nrecomp luaLaTex
   PdfLaTexMk -> pdfLaTexMk
   PdfLaTex -> recompile nrecomp pdfLaTex
-  XeLaTexMk -> xeLaTex
+  XeLaTexMk -> xeLaTexMk
   XeLaTex -> recompile nrecomp xeLaTex
 
 type EngineImpl =
