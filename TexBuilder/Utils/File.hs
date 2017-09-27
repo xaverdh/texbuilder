@@ -6,7 +6,9 @@ import Control.Monad.Extra
 import System.Directory
 import System.FilePath
 import System.Exit
+import System.IO
 
+import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Numeric.Natural
 import Data.Semigroup
 import Data.Maybe
@@ -55,7 +57,9 @@ copyRelative dir1 dir2 file = do
 assertFileEx :: FilePath -> IO ()
 assertFileEx file =
   unlessM (doesFileExist file) $ do
-    putStrLn (file <> " does not exist.")
+    PP.hPutDoc stderr . PP.red
+      $ PP.string (file <> " does not exist.")
+      <> PP.hardline
     exitFailure
 
 haveExe :: String -> IO Bool

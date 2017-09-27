@@ -14,6 +14,7 @@ import qualified Text.PrettyPrint.ANSI.Leijen as PP
 import Control.Applicative
 import Control.Monad
 import Control.Monad.Extra
+import System.IO
 import System.Exit
 import Data.Monoid
 
@@ -96,12 +97,14 @@ fallback = \case
       warn ("Falling back to " <> enginePath useEng <> ".")
 
 warn :: String -> IO ()
-warn s = PP.putDoc . PP.yellow
+warn s = PP.hPutDoc stderr . PP.yellow
   $ PP.string s <> PP.hardline
 
+errorNoEngine :: IO a
 errorNoEngine = do
-  PP.putDoc . PP.red
+  PP.hPutDoc stderr . PP.red
     $ PP.string "No latex engine found!"
+    <> PP.hardline
   exitWith $ ExitFailure 2
 
 
