@@ -7,6 +7,8 @@ your document, it will recompile it, overwrite the output pdf file
 and send a signal to your pdf reader to reload the file.
 This effectively allows for a "continous preview"-like experience.
 
+This will run with *mupdf* and *on Linux* only at the moment.
+
 ## Prerequisites and Dependencies
   * linux (we use inotify)
   * a recent cabal / ghc
