@@ -5,9 +5,9 @@ This program allows you to view your latex document in your pdf
 reader while editing it in your favorite editor. When you save
 your document, it will recompile it, overwrite the output pdf file
 and send a signal to your pdf reader to reload the file.
-This effectively allows for a "continous preview"-like experience.
+This effectively allows for a "continuous preview"-like experience.
 
-This will run with *mupdf* and *on Linux* only at the moment.
+This will run with *mupdf* and *only on Linux* at the moment.
 
 ## Prerequisites and Dependencies
   * linux (we use inotify)
@@ -37,7 +37,7 @@ Say you want to compile a tex file thesis.tex then standard usage would be:
 texbuilder -t thesis.tex
 ```
 By default texbuilder will use a fresh environment for every compile run. This may
-sound wasteful, but is quite feasible with average sized tex files on modern harware.
+sound wasteful, but is quite feasible with average sized tex files on modern hardware.
 And it does avoid problems with messed up state, when something goes wrong.
 
 Still if you do have problems with performance, use the ` --stateful ` flag.
