@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                texbuilder
-version:             0.1.1.1
+version:             0.1.1.2
 synopsis:            View your latex output while editing
 description:         
   This program allows you to view your latex document in your pdf viewer while 
@@ -55,7 +55,7 @@ executable texbuilder
   build-depends:       containers           >= 0.5.7 && < 0.6
   build-depends:       cryptonite           >= 0.23 && <= 0.24
   build-depends:       deepseq              >= 1.4.2 && < 1.5
-  build-depends:       ansi-wl-pprint       >= 0.6.7 && < 0.7
+  build-depends:       ansi-wl-pprint       >= 0.6.8 && < 0.7
   build-depends:       extra                >= 1.5.3 && < 1.7
   
   -- hs-source-dirs:      

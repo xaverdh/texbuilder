@@ -1,5 +1,9 @@
 # Revision history for tex-builder
 
+0.1.1.2
+---
+* Adjust wrong lower bound for ansi-wl-pprint in cabal file.
+
 0.1.1.1
 ---
 * Changes to README
