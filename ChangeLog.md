@@ -1,5 +1,10 @@
 # Revision history for tex-builder
 
+0.1.2.0
+---
+* Avoid calling external executables by hard coded path,
+  improving portability across platforms.
+
 0.1.1.3
 ---
 * Adjust wrong lower bound for base in cabal file.
