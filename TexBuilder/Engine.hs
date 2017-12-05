@@ -93,7 +93,7 @@ recompileSt run = get >>= \case
 luaLaTex :: EngineImpl
 luaLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/lualatex" args ""
+    "lualatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -110,7 +110,7 @@ luaLaTex outDir texfile extraArgs = do
 pdfLaTex :: EngineImpl
 pdfLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/pdflatex" args ""
+    "pdflatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -127,7 +127,7 @@ pdfLaTex outDir texfile extraArgs = do
 xeLaTex :: EngineImpl
 xeLaTex outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/xelatex" args ""
+    "xelatex" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -145,7 +145,7 @@ xeLaTex outDir texfile extraArgs = do
 xeLaTexMk :: EngineImpl
 xeLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/latexmk" args ""
+    "latexmk" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -162,7 +162,7 @@ xeLaTexMk outDir texfile extraArgs = do
 luaLaTexMk :: EngineImpl
 luaLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/latexmk" args ""
+    "latexmk" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
@@ -177,7 +177,7 @@ luaLaTexMk outDir texfile extraArgs = do
 pdfLaTexMk :: EngineImpl
 pdfLaTexMk outDir texfile extraArgs = do
   (exCode,out,err) <- readProcessWithExitCode
-    "/usr/bin/latexmk" args ""
+    "latexmk" args ""
   pure $ case exCode of
     ExitSuccess -> Right $ outDir </> jobname <.> "pdf"
     ExitFailure _ -> Left out
