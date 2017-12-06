@@ -1,6 +1,7 @@
 module TexBuilder.TexBuilder
   ( texBuilder
   , StatePolicy(..)
+  , Forced(..)
   , UseEngine(..)
   , UseLatexMk(..) )
 where
@@ -37,11 +38,14 @@ import Control.Concurrent.MVar
 
 data StatePolicy = Pure | Stateful | Persistent
 
+newtype Forced = Forced Bool
+
 texBuilder :: FilePath
   -> Maybe FilePath
   -> Exts
   -> Natural
   -> StatePolicy
+  -> Forced
   -> UseEngine
   -> UseLatexMk
   -> Natural
@@ -49,7 +53,7 @@ texBuilder :: FilePath
   -> IO ()
 texBuilder 
   texfile mbPdfFile exts depth statePolicy
-  useEngine useLatexmk nrecomp extraArgs
+  forced useEngine useLatexmk nrecomp extraArgs
   = do
   engine <- chooseEngine useEngine useLatexmk
   let runRaw = compile engine nrecomp texfile pdffile extraArgs
@@ -57,7 +61,7 @@ texBuilder
     $ \run -> do
       assertFileEx texfile
       -- ^ Assert that the tex file exists
-      initialCompile pdffile run
+      initialCompile forced pdffile run
       -- ^ Do an initial compile run if appropriate
       sem <- newBinSem
       -- ^ Signaling semaphore connecting the threads
@@ -83,11 +87,13 @@ texBuilder
     pdffile = fromMaybe (texfile -<.> "pdf") mbPdfFile
 
 
-initialCompile :: FilePath -> IO PP.Doc -> IO () 
-initialCompile pdffile run =
-  unlessM (doesFileExist pdffile) $ do
-    putStrLn "No ouput file detected, compiling."
-    run >>= PP.putDoc
+initialCompile :: Forced -> FilePath -> IO PP.Doc -> IO () 
+initialCompile (Forced f) pdffile run
+  | f = comp "Initial compilation forced, compiling."
+  | True = unlessM (doesFileExist pdffile)
+      $ comp "No ouput file detected, compiling."
+  where
+    comp msg = putStrLn msg >> run >>= PP.putDoc
 
 listSourceFiles :: Natural
   -> FilePath

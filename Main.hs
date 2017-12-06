@@ -26,6 +26,7 @@ main = execParser parser >>= id
       <*> fileTypesOpt
       <*> depthOpt
       <*> (statefulFlag <|> persistFlag <|> pure Pure)
+      <*> forcedFlag
       -- <*> watchOpt
       <*> engineOption
       <*> nolatexmkFlag
@@ -70,6 +71,11 @@ persistFlag = flag' Persistent
   <> help "Run in persistent mode, using the main directory\
           \ for building. If the state gets messed up, YOU\
           \ will have to fix it.")
+
+forcedFlag :: Parser Forced
+forcedFlag = Forced <$> switch
+  ( long "forced"
+  <> help "Run in forced mode, doing an intial compile run, even if a pdf file is already present. ")
 
 -- | not yet ready
 watchOpt :: Parser String
