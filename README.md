@@ -14,6 +14,13 @@ This will run with *mupdf* and *only on Linux* at the moment.
   * a recent cabal / ghc
   * (currently only works with) mupdf
   * working latex with lualatex, xelatex or pdflatex and ideally latexmk
+  * make sure to compile this with the -threaded ghc option, otherwise it will not work!
+
+## Build with Cabal from Hackage
+
+```sh
+cabal install --bindir . --ghc-option=-threaded texbuilder
+```
 
 ## How to build from git
 
