@@ -1,5 +1,10 @@
 # Revision history for tex-builder
 
+0.1.3.0
+---
+* Add new option to force an initial compile run.
+* Enforce threaded runtime in cabal file, fixing problems with e.g. the nix build, which is single threaded by default.
+
 0.1.2.0
 ---
 * Avoid calling external executables by hard coded path,
