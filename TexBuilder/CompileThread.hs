@@ -36,16 +36,16 @@ compileThread run viewSem wMVar hashes =
     compileLoop = do
       path <- lift . takeMVar =<< gets watchMVar
       -- ^ Wait for watcher thread to signal potential changes
-      withHash path $ \newHash -> do
-        table <- gets oldHashes
-        case M.lookup path table of -- ^ lookup old hash
-          Nothing -> go
-          Just oldHash -> when (oldHash /= newHash) go
-        -- ^ Compile when file was changed
-        modify $ \st ->
-          st { oldHashes = M.insert path newHash table }
-        -- ^ Write new hash value
-        compileLoop
+      newHash <- computeHash path
+      table <- gets oldHashes
+      case M.lookup path table of -- ^ lookup old hash
+        Nothing -> go
+        Just oldHash -> when (oldHash /= newHash) go
+      -- ^ Compile when file was changed
+      modify $ \st ->
+        st { oldHashes = M.insert path newHash table }
+      -- ^ Write new hash value
+      compileLoop
     
     go = lift $ do
       run >>= PP.putDoc

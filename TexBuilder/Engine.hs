@@ -71,16 +71,16 @@ recompile maxNum engine outDir texfile extraArgs = do
 recompileSt :: IO (Either String FilePath)
   -> StateT RecompileState IO (Either String FilePath)
 recompileSt run = get >>= \case
-  StInitial maxNum -> go $ succ maxNum
+  StInitial maxNum -> step $ succ maxNum
   StSucc i path oldHash ->
     if i <= 0 then done path
-      else go $ \path hash ->
+      else step $ \path hash ->
         if hash == oldHash then done path
           else succ i path hash
   where
-    go k = lift run >>= \case
+    step k = lift run >>= \case
       Left err -> failed err
-      Right path -> withHash path $ k path
+      Right path -> computeHash path >>= k path
     
     succ i path hash = do
       put $ StSucc (i-1) path hash

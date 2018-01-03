@@ -65,18 +65,18 @@ texBuilder
       -- ^ Do an initial compile run if appropriate
       sem <- newBinSem
       -- ^ Signaling semaphore connecting the threads
-      withInitialHashes listSrcFiles $ \hashes -> do
-        watchMVar <- newEmptyMVar
-        wtid <- forkIO $ 
-          setupWatches depth texDir fileFilter watchMVar
-        ctid <- forkIO $
-          compileThread run sem watchMVar hashes
-        -- ^ The thread which compiles the tex code
-        onFileEx pdffile ( mupdfView pdffile sem )
-        -- ^ Enter the main thread which updates the pdf view
-        putStrLn "mupdf exited, terminating"
-        killThread wtid
-        killThread ctid
+      hashes <- computeInitialHashes listSrcFiles
+      watchMVar <- newEmptyMVar
+      wtid <- forkIO $ 
+        setupWatches depth texDir fileFilter watchMVar
+      ctid <- forkIO $
+        compileThread run sem watchMVar hashes
+      -- ^ The thread which compiles the tex code
+      onFileEx pdffile ( mupdfView pdffile sem )
+      -- ^ Enter the main thread which updates the pdf view
+      putStrLn "mupdf exited, terminating"
+      killThread wtid
+      killThread ctid
   where
     fileFilter = extFilter exts
 
@@ -103,12 +103,12 @@ listSourceFiles depth texDir fileFilter =
   listSubdirs depth texDir
   >>= searchFilesWith fileFilter
 
-withInitialHashes :: IO [FilePath]
-  -> ( M.Map FilePath (Digest MD5) -> IO b)
-  -> IO b
-withInitialHashes listSrc k = do
+computeInitialHashes :: IO [FilePath]
+  -> IO ( M.Map FilePath (Digest MD5) )
+computeInitialHashes listSrc = do
   files <- listSrc
-  withHashes files $ k . M.fromList . zip files
+  hashes <- computeHashes files
+  pure . M.fromList $ zip files hashes
 
 
 withDirSetup :: FilePath
