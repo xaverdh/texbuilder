@@ -1,5 +1,9 @@
 # Revision history for tex-builder
 
+0.1.4.0
+---
+* Simplify code by reducing continuation foo somewhat.
+
 0.1.3.0
 ---
 * Add new option to force an initial compile run.
