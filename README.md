@@ -52,6 +52,10 @@ Still if you do have problems with performance, use the ` --stateful ` flag.
 Finally if you really really need all those intermediate representation files
 in your directory, use ` --persistent `.
 
+## Notes
+
+Early Versions (up to 0.1.2.0) of this program are deprecated, because the cabal file did not enforce use of the ` -threaded ` ghc option. If that option was not passed to cabal / ghc on the command line, the resulting builds were broken.
+
 ## Legal
 
 This program is free software: you can redistribute it and/or modify
