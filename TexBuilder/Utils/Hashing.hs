@@ -17,8 +17,8 @@ computeHash :: (MonadIO io,HashAlgorithm a)
   => FilePath -> io (Digest a)
 computeHash path = do
   hash <- liftIO (hashlazy <$> LB.readFile path)
-  pure $ deepseq hash hash
-  -- ^ deepseq is neccessary to force reading to
+  pure $ force hash
+  -- ^ force is neccessary to force reading to
   --   actually happen here (we want to capture the
   --   _current_ state of the file).
 
@@ -28,8 +28,8 @@ computeHashes ::
 computeHashes paths = do
   hashes <- forM paths $ \path ->
     liftIO (hashlazy <$> LB.readFile path)
-  pure $ deepseq hashes hashes
-  -- ^ deepseq is neccessary to force reading to
+  pure $ force hashes
+  -- ^ force is neccessary to force reading to
   --   actually happen here (we want to capture the
   --   _current_ state of the file).
 
