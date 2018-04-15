@@ -1,5 +1,10 @@
 # Revision history for tex-builder
 
+0.1.4.1
+---
+* Allowing building with cryptonite 0.25.
+* Mention deprecation of early versions in README.
+
 0.1.4.0
 ---
 * Simplify code by reducing continuation foo somewhat.
